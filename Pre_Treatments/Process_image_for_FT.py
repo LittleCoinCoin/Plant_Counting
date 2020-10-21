@@ -67,7 +67,7 @@ import CRAD
 # MAY BE CHANGED AS PER USER NEED
 # =============================================================================
 make_unique_folder_per_session = False
-session_number = 4
+session_number = 1
 
 do_Otsu = True
 do_AD = True
@@ -101,11 +101,11 @@ save_BSAS_images = False
 
 #path of the images 
 ### TO BE CHANGED AS PER USER NEED
-path_input = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Unity/Screenshots/2020_7_27_17_32_33/virtual_reality"
+path_input = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Datasets/2020_9_12_12_34_13/virtual_reality"
 
 #path that will store the files and images that result from the process
 ### MAY BE CHANGED AS PER USER NEED
-path_output_root = os.path.dirname(os.path.abspath(__file__))
+path_output_root = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code"
 
 #Creates new Output folders every time the process is launched
 gIO.check_make_directory(path_output_root)

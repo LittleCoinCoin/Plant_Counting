@@ -212,109 +212,96 @@ def Get_Signal_Period(_data, _axis_size, _bin_div):
 
 if (__name__ == "__main__"):
     
-    path_root = "D:/Projet/Unity/HDRP_PGoCF"
-    path_input_root = path_root+"/Output"
-    path_output_root = path_root+"/Output_FA"
+################## Paths and parameters definition
+    path_root = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code"
+    session_number = 1
+    
+    path_input_root = path_root+"/Output/Session_"+str(session_number)
+    path_output_root = path_root+"/Output_FA/Session_"+str(session_number)
     
     bins_div_X = 2
     bins_div_Y = 4
+            
+    path_input_bsas = path_input_root+"/BSAS/1_R/Output_Positions"
+    path_input_bsas_dir0 = path_input_bsas+"/direction_0"
+    path_input_bsas_dir1 = path_input_bsas+"/direction_1"
     
-    for session_number in range (1,4):
-        print()
-        print("Processing session", session_number)
-        path_input_session = path_input_root+"/MetaCapture_Session_{0}".format(session_number)
-        unity_date_list = os.listdir(path_input_session)
+    names_input_bsas_dir0 = os.listdir(path_input_bsas_dir0)
+    names_input_bsas_dir1 = os.listdir(path_input_bsas_dir1)
+    
+    path_output_FT_predictions = path_output_root+"/Plant_FT_Predictions"
+    gIO.check_make_directory(path_output_FT_predictions)
+    
+    subset_size = 8
+    
+################## Import Data
+    data_bsas_dir0 = import_data(path_input_bsas_dir0,
+                                 names_input_bsas_dir0[:subset_size],
+                                 get_file_lines)
+    
+    data_bsas_dir1 = import_data(path_input_bsas_dir1,
+                                 names_input_bsas_dir1[:subset_size],
+                                 get_file_lines)
+    
+    nb_images = len(data_bsas_dir0)
+    
+    for i in range (nb_images):
+        size_str = data_bsas_dir0[i][0].split('*')
+        (lines, columns) = (int(size_str[0]), int(size_str[1]))
         
-        path_output_session = path_output_root+"/MetaCapture_Session_{0}".format(session_number)
+        X,Y = separate_X_Y_from_bsas_files(data_bsas_dir0[i])
         
-        unity_date_counter = 0
-        unity_date_total = len(unity_date_list)
-        for _unity_date in unity_date_list:
-            print("Processiong file {0}/{1}".format(unity_date_counter+1, unity_date_total))
-            
-            path_input_bsas = path_input_session+"/"+_unity_date+"/BSAS/1_R/Output_Positions"
-            path_input_bsas_dir0 = path_input_bsas+"/direction_0"
-            path_input_bsas_dir1 = path_input_bsas+"/direction_1"
-            
-            names_input_bsas_dir0 = os.listdir(path_input_bsas_dir0)
-            names_input_bsas_dir1 = os.listdir(path_input_bsas_dir1)
-            
-            path_output_FT_predictions = path_output_session+"/"+_unity_date+"/Plant_FT_Predictions"
-            gIO.check_make_directory(path_output_FT_predictions)
-            
-            subset_size = 4
-            
-            #Import Data
-            data_bsas_dir0 = import_data(path_input_bsas_dir0,
-                                         names_input_bsas_dir0[:subset_size],
-                                         get_file_lines)
-            
-            data_bsas_dir1 = import_data(path_input_bsas_dir1,
-                                         names_input_bsas_dir1[:subset_size],
-                                         get_file_lines)
-            
-            nb_images = len(data_bsas_dir0)
-            
-            for i in range (nb_images):
-                size_str = data_bsas_dir0[i][0].split('*')
-                (lines, columns) = (int(size_str[0]), int(size_str[1]))
-                
-                X,Y = separate_X_Y_from_bsas_files(data_bsas_dir0[i])
-                
-                
+        
 ################## Analyse signal on X axis            
-                histogram, signal_period = Get_Signal_Period(X, columns, bins_div_X)
-                crops_rows = Search_Periodic_Peaks(histogram[0], signal_period, bins_div_X)
-                nb_rows = len(crops_rows)
-                print("nb_rows:", nb_rows)
-                
+        histogram, signal_period = Get_Signal_Period(X, columns, bins_div_X)
+        crops_rows = Search_Periodic_Peaks(histogram[0], signal_period, bins_div_X)
+        nb_rows = len(crops_rows)
+        print("nb_rows:", nb_rows)
+        
 ################## Analyse signal on Y axis
-                crops_rows_content = Extract_Y_Coord_of_Crop_Rows(
-                                                    crops_rows,
-                                                    X.size, signal_period*bins_div_X,
-                                                    X, Y)
-                
-                #For the analysis on axis Y we separate the detection of the signal period
-                #and the search of the peaks. We agglomerate the signal periods of all
-                #the crops rows by taking the median. This is necessary because the
-                #signal of the Y axis is usually less clear than the signal on the X
-                #axis.
-                all_histograms_per_CR = []
-                all_period_per_CR=[]
-                for _cr_content in crops_rows_content:
+        crops_rows_content = Extract_Y_Coord_of_Crop_Rows(
+                                            crops_rows,
+                                            X.size, signal_period*bins_div_X,
+                                            X, Y)
+        
+        #For the analysis on axis Y we separate the detection of the signal period
+        #and the search of the peaks. We agglomerate the signal periods of all
+        #the crops rows by taking the median. This is necessary because the
+        #signal of the Y axis is usually less clear than the signal on the X
+        #axis.
+        all_histograms_per_CR = []
+        all_period_per_CR=[]
+        for _cr_content in crops_rows_content:
 # =============================================================================
 #                   plt.figure()
 #                   plt.subplot(211)
 #                   plt.hist(_cr_content, bins=int(lines/bins_div_Y))
 # =============================================================================
-                    histogram, signal_period = Get_Signal_Period(_cr_content, lines, bins_div_Y)
-                    all_histograms_per_CR.append(histogram)
-                    all_period_per_CR.append(signal_period)
-                
-                predicted_plants_Y_per_crop_rows = []
-                print("all_period_per_CR:", all_period_per_CR)
-                # = int(np.median(all_period_per_CR))
-                signal_period = int(min(all_period_per_CR))
-                print("signal_period:", signal_period)
-                for j in range(nb_rows):
-                    predicted_plants = Search_Periodic_Peaks(all_histograms_per_CR[j][0], signal_period, bins_div_Y)
-                    predicted_plants_Y_per_crop_rows += [predicted_plants]
-                
-                
-################## Reorganise plant coordinates
-                predicted_FT = []
-                nb_predictions = 0
-                for j in range(nb_rows):
-                    current_CR_content = predicted_plants_Y_per_crop_rows[j]
-                    crops_coord_in_CR = []
-                    for _plant_height in current_CR_content:
-                        crops_coord_in_CR.append([int(crops_rows[j]), int(_plant_height)])
-                        nb_predictions+=1
-                    predicted_FT.append(crops_coord_in_CR)
-                
-################## Save the predictions in json file
-                _file_name="PredictedRows_Img_"+str(i)+"_"+str(nb_predictions)
-                gIO.WriteJson(path_output_FT_predictions, _file_name, predicted_FT)
+            histogram, signal_period = Get_Signal_Period(_cr_content, lines, bins_div_Y)
+            all_histograms_per_CR.append(histogram)
+            all_period_per_CR.append(signal_period)
         
-            unity_date_counter+=1
-
+        predicted_plants_Y_per_crop_rows = []
+        print("all_period_per_CR:", all_period_per_CR)
+        # = int(np.median(all_period_per_CR))
+        signal_period = int(min(all_period_per_CR))
+        print("signal_period:", signal_period)
+        for j in range(nb_rows):
+            predicted_plants = Search_Periodic_Peaks(all_histograms_per_CR[j][0], signal_period, bins_div_Y)
+            predicted_plants_Y_per_crop_rows += [predicted_plants]
+        
+        
+################## Reorganise plant coordinates
+        predicted_FT = []
+        nb_predictions = 0
+        for j in range(nb_rows):
+            current_CR_content = predicted_plants_Y_per_crop_rows[j]
+            crops_coord_in_CR = []
+            for _plant_height in current_CR_content:
+                crops_coord_in_CR.append([int(crops_rows[j]), int(_plant_height)])
+                nb_predictions+=1
+            predicted_FT.append(crops_coord_in_CR)
+        
+################## Save the predictions in json file
+        _file_name="PredictedRows_Img_"+str(i)+"_"+str(nb_predictions)
+        gIO.WriteJson(path_output_FT_predictions, _file_name, predicted_FT)
