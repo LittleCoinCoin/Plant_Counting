@@ -205,23 +205,15 @@ def Get_Signal_Period(_data, _axis_size, _bin_div):
     
     return histogram, signal_period
 
-
-# =============================================================================
-# General Fourier Procedure
-# =============================================================================
-
-if (__name__ == "__main__"):
+def All_Fourier_Analysis(_path_input_output,
+                         _session_number=1,
+                         _bin_div_X=2, _bin_div_Y=4):
     
-################## Paths and parameters definition
-    path_root = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code"
-    session_number = 1
+    ################## Paths and parameters definition
     
-    path_input_root = path_root+"/Output/Session_"+str(session_number)
-    path_output_root = path_root+"/Output_FA/Session_"+str(session_number)
+    path_input_root = _path_input_output+"/Output/Session_"+str(_session_number)
+    path_output_root = _path_input_output+"/Output_FA/Session_"+str(_session_number)
     
-    bins_div_X = 2
-    bins_div_Y = 4
-            
     path_input_bsas = path_input_root+"/BSAS/1_R/Output_Positions"
     path_input_bsas_dir0 = path_input_bsas+"/direction_0"
     path_input_bsas_dir1 = path_input_bsas+"/direction_1"
@@ -232,7 +224,7 @@ if (__name__ == "__main__"):
     path_output_FT_predictions = path_output_root+"/Plant_FT_Predictions"
     gIO.check_make_directory(path_output_FT_predictions)
     
-    subset_size = 8
+    subset_size = 4
     
 ################## Import Data
     data_bsas_dir0 = import_data(path_input_bsas_dir0,
@@ -253,16 +245,17 @@ if (__name__ == "__main__"):
         
         
 ################## Analyse signal on X axis            
-        histogram, signal_period = Get_Signal_Period(X, columns, bins_div_X)
-        crops_rows = Search_Periodic_Peaks(histogram[0], signal_period, bins_div_X)
+        histogram, signal_period = Get_Signal_Period(X, columns, _bin_div_X)
+        crops_rows = Search_Periodic_Peaks(histogram[0], signal_period, _bin_div_X)
         nb_rows = len(crops_rows)
         print("nb_rows:", nb_rows)
         
 ################## Analyse signal on Y axis
+        X2,Y2 = separate_X_Y_from_bsas_files(data_bsas_dir1[i])
         crops_rows_content = Extract_Y_Coord_of_Crop_Rows(
                                             crops_rows,
-                                            X.size, signal_period*bins_div_X,
-                                            X, Y)
+                                            X2.size, signal_period*_bin_div_X,
+                                            X2, Y2)
         
         #For the analysis on axis Y we separate the detection of the signal period
         #and the search of the peaks. We agglomerate the signal periods of all
@@ -277,17 +270,17 @@ if (__name__ == "__main__"):
 #                   plt.subplot(211)
 #                   plt.hist(_cr_content, bins=int(lines/bins_div_Y))
 # =============================================================================
-            histogram, signal_period = Get_Signal_Period(_cr_content, lines, bins_div_Y)
+            histogram, signal_period = Get_Signal_Period(_cr_content, lines, _bin_div_Y)
             all_histograms_per_CR.append(histogram)
             all_period_per_CR.append(signal_period)
         
         predicted_plants_Y_per_crop_rows = []
         print("all_period_per_CR:", all_period_per_CR)
-        # = int(np.median(all_period_per_CR))
-        signal_period = int(min(all_period_per_CR))
+        signal_period = int(np.median(all_period_per_CR))
+        #signal_period = int(min(all_period_per_CR))
         print("signal_period:", signal_period)
         for j in range(nb_rows):
-            predicted_plants = Search_Periodic_Peaks(all_histograms_per_CR[j][0], signal_period, bins_div_Y)
+            predicted_plants = Search_Periodic_Peaks(all_histograms_per_CR[j][0], signal_period, _bin_div_Y)
             predicted_plants_Y_per_crop_rows += [predicted_plants]
         
         
@@ -305,3 +298,16 @@ if (__name__ == "__main__"):
 ################## Save the predictions in json file
         _file_name="PredictedRows_Img_"+str(i)+"_"+str(nb_predictions)
         gIO.WriteJson(path_output_FT_predictions, _file_name, predicted_FT)
+
+
+
+
+# =============================================================================
+# General Fourier Procedure
+# =============================================================================
+
+if (__name__ == "__main__"):
+    
+    All_Fourier_Analysis(_path_input_output="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Ouput_General",
+                         _session_number=1,
+                         _bin_div_X=2, _bin_div_Y=4)
