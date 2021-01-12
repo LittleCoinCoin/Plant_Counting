@@ -61,9 +61,10 @@ import bsas
 
 os.chdir("../Crops_Rows_Angle_Detection")
 import CRAD
-
+    
 
 def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
+                      _path_position_files = None, _rows_real_angle = 0,
                       _make_unique_folder_per_session=True, _session=1,
                       _do_Otsu=True, _do_AD=True,
                       _save_AD_score_images=False, _save_BSAS_images=False,
@@ -107,7 +108,6 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
     path_output_ADp = path_output + "/ADp" + "/" + str(_bsas_threshold)
     path_output_ADp_angle_search_score = path_output_ADp + "/Output_AngleScore"
     path_output_ADp_Images = path_output_ADp + "/Output_Images"
-    
     gIO.check_make_directory(path_output_ADp_angle_search_score)
     gIO.check_make_directory(path_output_ADp_Images)
     
@@ -171,12 +171,31 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
                 if (_save_BSAS_images):
                     bsp1.save_BSASmap(path_output_BSAS_images_R[k])
             i+=1
+            
+# =============================================================================
+# If we have the positions of the plants, We rotate the real positions of the
+# plants according ot the real angle.
+# This is equivalent to say that the images are labelled
+# We need the position_files somewhere and Inidicate it in the _path_labelled_position
+# =============================================================================
+    if (_path_position_files!=None):
+        print("in")
+        path_output_adjusted_position_files = path_output + "/Adjusted_Position_Files"
+        gIO.check_make_directory(path_output_adjusted_position_files)
+        
+        CRAD.Produce_Adjusted_Position_Files(_path_position_files,
+                                             path_output_adjusted_position_files,
+                                             _rows_real_angle,
+                                             _path_input_rgb_img,
+                                             list_images)
 
 if (__name__=="__main__"):
     
-    All_Pre_Treatment(_path_input_rgb_img="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Datasets/Test",
-                      _path_output_root="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Ouput_General",
-                      _make_unique_folder_per_session=True, _session=1,
-                      _do_Otsu=True, _do_AD=True,
+    All_Pre_Treatment(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/virtual_reality",
+                      _path_output_root="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Ouput_General",
+                      _path_position_files="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Position_Files",
+                      _rows_real_angle=80,
+                      _make_unique_folder_per_session=False, _session=1,
+                      _do_Otsu=False, _do_AD=False,
                       _save_AD_score_images=False, _save_BSAS_images=False,
                       _bsas_threshold=1)

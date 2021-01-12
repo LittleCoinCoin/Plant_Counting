@@ -7,12 +7,70 @@ Created on Fri May 29 10:23:23 2020
 The classes are built to contain the method automatically looking for the crops
 rows angle.
 """
-# =============================================================================
-# from sklearn.cluster import DBSCAN
-# =============================================================================
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image #, ImageDraw
+
+os.chdir("../Utility")
+import general_IO as gIO
+
+def Produce_Adjusted_Position_Files( _path_position_files,
+                                     _path_adjusted_position_files,
+                                     _rows_real_angle,
+                                     _path_input_rgb_img,
+                                     _list_rgb_images,
+                                     _pivot = np.array([960,540])
+                                     ):
+    
+    position_files = os.listdir(_path_position_files)
+    nb_imgs = len(_list_rgb_images)
+    assert len(position_files) == nb_imgs
+    
+    _theta = np.deg2rad(_rows_real_angle)
+    R = np.array([[np.cos(_theta), -np.sin(_theta)],
+                         [np.sin(_theta),  np.cos(_theta)]])
+    
+    
+    for i in range (nb_imgs):
+        _img = Image.open(_path_input_rgb_img+\
+                          "/" + _list_rgb_images[i])
+        
+        a = np.array([_img.width, 0])
+        b = np.array([0, 0])
+        #offset to have only positives coordinates
+        x_offset = (np.dot(R, a-_pivot)+_pivot-a)[0]
+        y_offset = (np.dot(R, b-_pivot)+_pivot-a)[1]
+        
+        posFile_content = gIO.reader(_path_position_files, position_files[i])
+        nb_lines = len(posFile_content)
+        
+        _adjusted_pos = []
+        for _i in range(nb_lines):
+            _line_split = posFile_content[_i].split(",")
+            _screen_prop = np.array([float(_line_split[2]), float(_line_split[3])])
+            _rot_coord = np.dot(R, _screen_prop*np.array([_img.width, _img.height])-_pivot)+\
+                        _pivot + np.array([x_offset, -y_offset])
+            _adjusted_pos  += [_line_split[0] + "," + \
+                             _line_split[1] + "," + \
+                             str(int(_rot_coord[0])) + "," + \
+                             str(int(_rot_coord[1]))]
+        
+        #gIO.check_make_directory(_path_adjusted_position_files)
+        gIO.writer(_path_adjusted_position_files, 
+                   "Adjusted_plant_positions_"+_list_rgb_images[i].split(".")[0]+".csv",
+                   _adjusted_pos,
+                   True, True)
+        
+
+# =============================================================================
+# Produce_Adjusted_Position_Files(
+#         "D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Position_Files",
+#         "D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Ouput_General"+"/Output/Session_{0}".format(1)+"/Adjusted_Position_Files",
+#         80,
+#         "D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/virtual_reality",
+#         os.listdir("D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/virtual_reality"))
+# =============================================================================
 
 
 class CRAD_Voting:
@@ -57,7 +115,6 @@ class CRAD_Voting:
                 _AD.coord_centroid_map_Rot = np.dot(_AD.coord_map,
                                                      _AD.angle_min_rotation_matrix)
                 
-
 class CRAD:
 
     def __init__(self, 
