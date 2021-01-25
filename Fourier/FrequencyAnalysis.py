@@ -224,7 +224,7 @@ def All_Fourier_Analysis(_path_input_output,
     path_output_FT_predictions = path_output_root+"/Plant_FT_Predictions"
     gIO.check_make_directory(path_output_FT_predictions)
     
-    subset_size = 4
+    subset_size = 8
     
 ################## Import Data
     data_bsas_dir0 = import_data(path_input_bsas_dir0,

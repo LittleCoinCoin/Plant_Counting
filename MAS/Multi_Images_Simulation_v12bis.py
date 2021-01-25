@@ -41,7 +41,7 @@ def get_file_lines(path_csv_file):
 
 def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
                     _labelled_images = False,
-                    _session_number=1,
+                    _session_number=1, _growth_monitoring = False, _path_MAS_initialize = None,
                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5):
 
@@ -50,7 +50,11 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # =============================================================================
     #
     path_input_OTSU = _path_PreTreatment_and_FA+"/Output/Session_"+str(_session_number)+"/Otsu_R"
-    path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
+    
+    if (not _growth_monitoring):
+        path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
+    else:
+        path_input_PLANT_FT_PRED = _path_MAS_initialize
     
     path_output = _path_PreTreatment_and_FA+"/Output_Meta_Simulation/Session_"+str(_session_number)
     gIO.check_make_directory(path_output)
@@ -131,6 +135,6 @@ if (__name__=="__main__"):
     All_Simulations(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/virtual_reality",
                     _path_PreTreatment_and_FA="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Ouput_General",
                     _labelled_images = True,
-                    _session_number=1,
+                    _session_number=1, _growth_monitoring = False,_path_MAS_initialize = None,
                     _RAs_group_size=10, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)

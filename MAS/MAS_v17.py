@@ -333,22 +333,26 @@ class ReactiveAgent_Leader(object):
             image_row = self.y+explorers[0][1]#row coord in image array
             image_col = self.x+explorers[0][0]#col coord in image array
             
-            if (self.img_array[image_row][image_col][0] > 220):#if the pixel is white
-                surface_print[print_row][print_col]=2
-                self.nb_contiguous_white_pixel +=1
-                
-                for _d in directions:
-                    if (0 <= print_row + _d[1] < square_width and
-                        0 <= print_col + _d[0]< square_width):#if in the bounds of the surface_print array size
-                        if (surface_print[print_row + _d[1]][print_col + _d[0]] == 0):#if the pixel has not an explorer already
-                            
-                            surface_print[print_row+_d[1]][print_col+_d[0]]=1#we indicate that we have added the coords to the explorers
-                            
-                            new_explorer_x = print_col-self.group_size + _d[0]
-                            new_explorer_y = print_row-self.group_size + _d[1]
-                            explorers += [(new_explorer_x, 
-                                           new_explorer_y)]
-                            nb_explorers += 1
+            if (image_row < self.img_array.shape[0] and 
+                image_col < self.img_array.shape[1] and
+                print_row < surface_print.shape[0] and 
+                print_col < surface_print.shape[1]):
+                if (self.img_array[image_row][image_col][0] > 220):#if the pixel is white
+                    surface_print[print_row][print_col]=2
+                    self.nb_contiguous_white_pixel +=1
+                    
+                    for _d in directions:
+                        if (0 <= print_row + _d[1] < square_width and
+                            0 <= print_col + _d[0]< square_width):#if in the bounds of the surface_print array size
+                            if (surface_print[print_row + _d[1]][print_col + _d[0]] == 0):#if the pixel has not an explorer already
+                                
+                                surface_print[print_row+_d[1]][print_col+_d[0]]=1#we indicate that we have added the coords to the explorers
+                                
+                                new_explorer_x = print_col-self.group_size + _d[0]
+                                new_explorer_y = print_row-self.group_size + _d[1]
+                                explorers += [(new_explorer_x, 
+                                               new_explorer_y)]
+                                nb_explorers += 1
             
             explorers = explorers[1:]
             nb_explorers -= 1
@@ -428,7 +432,7 @@ class Row_Agent(object):
         
         for _plant_pred in self.plant_FT_pred_in_crop_row:
             RAL = ReactiveAgent_Leader(_x = _plant_pred[0],
-                                       _y = self.OTSU_img_array.shape[0] - _plant_pred[1],
+                                       _y = _plant_pred[1], #self.OTSU_img_array.shape[0] - 
                                        _img_array = self.OTSU_img_array,
                                        _group_size = self.group_size,
                                        _group_step = self.group_step,
@@ -1105,6 +1109,19 @@ class Simulation_MAS(object):
     _ADJUSTED_img_plant_positions (list, optional with default value = None):
         The list containing the adjusted positions of the plants coming from
         the csv files. So the positions are still in the string format.
+    
+    _follow_simulation (bool, optional with default value = False):
+        Generates the plot showing all RALs and target positions at every steps
+        of the simulation to follow the movements and theevolution of the number
+        RALs
+    
+    _follow_simulation_save_path(string, optional with default value ""):
+        The path where the plots following the steps of the simulation will be 
+        saved.
+    
+    _simulation_name (string, optional with default value = ""):
+        Name given to the simulation. used as a prefix of the some saved files.
+    
     """
     
     def __init__(self, _RAW_img_array,
@@ -1112,7 +1129,10 @@ class Simulation_MAS(object):
                  _group_size = 50, _group_step = 5,
                  _RALs_fuse_factor = 0.5, _RALs_fill_factor = 1.5,
                  _field_offset = [0,0],
-                 _ADJUSTED_img_plant_positions = None):
+                 _ADJUSTED_img_plant_positions = None,
+                 _follow_simulation = False,
+                 _follow_simulation_save_path = "",
+                 _simulation_name = ""):
         
         print("Initializing Simulation class...", end = " ")
         
@@ -1147,6 +1167,14 @@ class Simulation_MAS(object):
         self.real_plant_detected_keys = []
         
         print("Done")
+        
+        self.follow_simulation = _follow_simulation
+        if (_follow_simulation):
+            self.follow_simulation_save_path = _follow_simulation_save_path
+            gIO.check_make_directory(self.follow_simulation_save_path)
+            
+        self.simulation_name = _simulation_name
+
         
     def Initialize_AD(self):
         self.AD = Agents_Director(self.plant_FT_pred_par_crop_rows,
@@ -1259,8 +1287,15 @@ class Simulation_MAS(object):
         self.AD.ORDER_RowAs_to_Update_InterPlant_Y()
         self.AD.Summarize_RowAs_InterPlant_Y()
         
+        if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_A")
+        
         if (_edge_exploration):
             self.AD.ORDER_RowAs_for_Edges_Exploration()
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_B")
         
         self.AD.ORDER_RowAs_to_Update_InterPlant_Y()
         
@@ -1272,7 +1307,7 @@ class Simulation_MAS(object):
         i = 0
         while i < self.steps and not stop_simu:
             print("Simulation step {0}/{1} (max)".format(i+1, _steps))
-            
+                        
             time_detailed=[]
             t0 = time.time()
             
@@ -1297,17 +1332,33 @@ class Simulation_MAS(object):
             self.AD.ORDER_RowAs_for_Moving_RALs_to_active_points()
             time_detailed += [time.time()-t0]
             
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_1".format(i+1))
+            
             t0 = time.time()
             self.AD.ORDER_RowAs_to_Adapt_RALs_sizes()
             time_detailed += [time.time()-t0]
+            
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_2".format(i+1))
             
             t0 = time.time()
             self.AD.ORDER_RowAs_Fill_or_Fuse_RALs()
             time_detailed += [time.time()-t0]
             
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_3".format(i+1))
+            
             t0 = time.time()
             self.AD.ORDER_RowAs_to_Destroy_Low_Activity_RALs()
             time_detailed += [time.time()-t0]
+            
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_4".format(i+1))
             
             t0 = time.time()
             self.AD.Check_RowAs_Proximity()
@@ -1323,6 +1374,8 @@ class Simulation_MAS(object):
             self.Count_RALs()
             
             diff_nb_RALs = self.RALs_recorded_count[-1] - self.RALs_recorded_count[-2]
+            
+            
             
             if (diff_nb_RALs == 0):
                 if not re_eval:
@@ -1407,7 +1460,7 @@ class Simulation_MAS(object):
         for adj_pos_string in self.ADJUSTED_img_plant_positions:
             [_rx, _ry, x, y] = adj_pos_string.split(",")
             self.corrected_adjusted_plant_positions += [[int(x),
-                                                        self.OTSU_img_array.shape[0]-int(y)]]
+                                                        int(y)]]#self.OTSU_img_array.shape[0]-
             self.real_plant_keys += [_rx + "_" + _ry]
         
     def Count_RALs(self):
@@ -1538,7 +1591,7 @@ class Simulation_MAS(object):
         
         for [x,y] in self.corrected_adjusted_plant_positions:
             circle = patches.Circle((x,y),
-                                    radius = 2,
+                                    radius = 10,
                                     linewidth = 2,
                                     edgecolor = None,
                                     facecolor = _color)
@@ -1547,9 +1600,9 @@ class Simulation_MAS(object):
     def Show_Adjusted_And_RALs_positions(self,
                                         _recorded_position_indeces = [-1],
                                         _colors_recorded = ['g'],
-                                        _color_adjusted = "b",
+                                        _color_adjusted = "r",
                                         _save=False,
-                                        _save_path=""):
+                                        _save_name=""):
         
         fig = plt.figure(figsize=(5,5),dpi=300)
         ax = fig.add_subplot(111)
@@ -1562,7 +1615,8 @@ class Simulation_MAS(object):
                                      _color = _color_adjusted)
         
         if (_save):
-            fig.savefig(_save_path+"/Otsu_Adjusted_and_RALs_positions.jpg")
+            fig.savefig(self.follow_simulation_save_path+"/"+_save_name)
+            plt.close()
     
     def Show_RALs_Deicision_Scores(self):
         """
@@ -1991,7 +2045,7 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         meta_simulation_results dictionary as a JSON file.
         """
-        name = self.Make_File_Name("MetaSimulationResults_v16_"+self.simu_name)
+        name = self.Make_File_Name("MetaSimulationResults_"+self.simu_name)
         
         file = open(self.path_output+"/"+name+".json", "w")
         json.dump(self.meta_simulation_results, file, indent = 3)
@@ -2002,7 +2056,7 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         meta_simulation_results dictionary as a JSON file.
         """
-        name = self.Make_File_Name("RALs_Infos_v16_"+self.simu_name)
+        name = self.Make_File_Name("RALs_Infos_"+self.simu_name)
         file = open(self.path_output+"/"+name+".json", "w")
         json.dump(self.RALs_data, file, indent = 2)
         file.close()
@@ -2013,8 +2067,8 @@ class MetaSimulation(object):
         image. The json file is in the exact same format as The plant predictions
         on
         """
-        name = self.Make_File_Name("RALs_NestedPositions_v16_"+self.simu_name)
-        _path=self.path_output+"/"+name
+        name = self.Make_File_Name("RALs_NestedPositions_"+self.simu_name)
+        _path=self.path_output+"/RALs_NestedPositions"
         gIO.check_make_directory(_path)
         counter = 0
         for _nested_pos in self.RALs_all_nested_positions:
@@ -2029,12 +2083,12 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         whole_field_counted_plants dictionary as a JSON file.
         """
-        name = self.Make_File_Name("WholeFieldResults_v16_"+self.simu_name)
+        name = self.Make_File_Name("WholeFieldResults_"+self.simu_name)
         file = open(self.path_output+"/"+name+".json", "w")
         json.dump(self.whole_field_counted_plants, file, indent = 2)
         file.close()
     
     def Save_Log(self):
-        name = self.Make_File_Name("LOG_MetaSimulationResults_v16_"+self.simu_name)
+        name = self.Make_File_Name("LOG_MetaSimulationResults_"+self.simu_name)
         gIO.writer(self.path_output, name+".txt", self.log, True, True)
         
