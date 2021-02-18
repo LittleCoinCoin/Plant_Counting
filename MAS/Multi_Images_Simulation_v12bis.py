@@ -10,7 +10,7 @@ import json
 import numpy as np
 from PIL import Image
 
-import MAS_v17 as MAS
+import MAS_v20 as MAS
 
 os.chdir("../Utility")
 import general_IO as gIO
@@ -85,7 +85,7 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
         names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
         data_adjusted_position_files = import_data(path_input_adjusted_position_files,
                                                names_input_adjusted_position_files,
-                                               get_file_lines)
+                                               get_json_file_content)
     else:
         data_adjusted_position_files = None
     
@@ -115,8 +115,6 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
         MetaSimulation.Launch_Meta_Simu_Labels(
                                     _coerced_X = True,
                                     _coerced_Y = False,
-                                    _extensive_Init = False,
-                                    _new_end_crit = True,
                                     _analyse_and_remove_Rows = True,
                                     _rows_edges_exploration = True)
     
@@ -125,16 +123,14 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
         MetaSimulation.Launch_Meta_Simu_NoLabels(
                                     _coerced_X = True,
                                     _coerced_Y = False,
-                                    _extensive_Init = False,
-                                    _new_end_crit = True,
                                     _analyse_and_remove_Rows = True,
                                     _rows_edges_exploration = True)
     
 if (__name__=="__main__"):
 
-    All_Simulations(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/virtual_reality",
-                    _path_PreTreatment_and_FA="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Ouput_General",
+    All_Simulations(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB",
+                    _path_PreTreatment_and_FA="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/Ouput_General",
                     _labelled_images = True,
                     _session_number=1, _growth_monitoring = False,_path_MAS_initialize = None,
-                    _RAs_group_size=10, _RAs_group_steps=2, _Simulation_steps=50,
+                    _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)
