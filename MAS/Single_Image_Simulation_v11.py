@@ -10,7 +10,7 @@ import json
 import numpy as np
 from PIL import Image
 
-import MAS_v17 as MAS
+import MAS_v18 as MAS
 
 
 # =============================================================================

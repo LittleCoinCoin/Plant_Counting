@@ -122,19 +122,39 @@ def Growth_Monitoring(
     
 
 if (__name__=="__main__"):
+    CompleteProcess(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB",
+                    _path_output_root="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/Ouput_General",
+                    
+                    _labelled_images = True,
+                    _path_position_files="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/Dataset",
+                    _rows_real_angle=80,
+                    
+                    _growth_monitoring = False,
+                    
+                    _make_unique_folder_per_session=False, _session=1,
+                    _do_Otsu=True, _do_AD=True,
+                    _save_AD_score_images=False, _save_BSAS_images=False,
+                    _bsas_threshold=1,
+                    
+                    _bin_div_X=2, _bin_div_Y=4,
+                    
+                    _RAs_group_size=30, _RAs_group_steps=2, _Simulation_steps=1,
+                    _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)
 # =============================================================================
-#     CompleteProcess(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_3/2021_1_21_10_53_49/virtual_reality",
-#                     _path_output_root="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_3/2021_1_21_10_53_49/Ouput_General",
+#     Growth_Monitoring(
+#                     
+#                     _path_monitoring_root = "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_6",
+#             
+#                     _folder_input_rgb_img="/virtual_reality",
+#                     _folder_output_root="/Ouput_General",
 #                     
 #                     _labelled_images = True,
-#                     _path_position_files="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_3/2021_1_21_10_53_49/Position_Files",
+#                     _folder_position_files="/Position_Files",
 #                     _rows_real_angle=80,
 #                     
-#                     _growth_monitoring = False,
-#                     
 #                     _make_unique_folder_per_session=False, _session=1,
-#                     _do_Otsu=False, _do_AD=False,
-#                     _save_AD_score_images=False, _save_BSAS_images=False,
+#                     _do_Otsu=True, _do_AD=True,
+#                     _save_AD_score_images=True, _save_BSAS_images=False,
 #                     _bsas_threshold=1,
 #                     
 #                     _bin_div_X=2, _bin_div_Y=4,
@@ -142,23 +162,3 @@ if (__name__=="__main__"):
 #                     _RAs_group_size=50, _RAs_group_steps=10, _Simulation_steps=50,
 #                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)
 # =============================================================================
-    Growth_Monitoring(
-                    
-                    _path_monitoring_root = "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_6",
-            
-                    _folder_input_rgb_img="/virtual_reality",
-                    _folder_output_root="/Ouput_General",
-                    
-                    _labelled_images = True,
-                    _folder_position_files="/Position_Files",
-                    _rows_real_angle=80,
-                    
-                    _make_unique_folder_per_session=False, _session=1,
-                    _do_Otsu=True, _do_AD=True,
-                    _save_AD_score_images=True, _save_BSAS_images=False,
-                    _bsas_threshold=1,
-                    
-                    _bin_div_X=2, _bin_div_Y=4,
-                    
-                    _RAs_group_size=50, _RAs_group_steps=10, _Simulation_steps=50,
-                    _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)

@@ -61,6 +61,9 @@ import bsas
 
 os.chdir("../Crops_Rows_Angle_Detection")
 import CRAD
+
+os.chdir("../Labels_Processing")
+import Labels_Processing_v2 as LblP
     
 
 def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
@@ -183,19 +186,28 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
         path_output_adjusted_position_files = path_output + "/Adjusted_Position_Files"
         gIO.check_make_directory(path_output_adjusted_position_files)
         
-        CRAD.Produce_Adjusted_Position_Files(_path_position_files,
+        LblP.Produce_Adjusted_Position_Files(_path_position_files,
                                              path_output_adjusted_position_files,
                                              _rows_real_angle,
                                              _path_input_rgb_img,
                                              list_images)
+        
+# =============================================================================
+#         path_output_bounding_boxes_files = path_output + "/Plant_Bounding_Boxes"
+#         gIO.check_make_directory(path_output_bounding_boxes_files)
+#         LblP.Compute_Pixels_In_Plant_Bounding_Boxes(
+#             _path_position_files,
+#             path_output_bounding_boxes_files,
+#             path_output_Otsu)
+# =============================================================================
 
 if (__name__=="__main__"):
     
-    All_Pre_Treatment(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/virtual_reality",
-                      _path_output_root="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Ouput_General",
-                      _path_position_files="D:/Projet/Unity/HDRP_PGoCF/Datasets/X_Bell5Keys_Z_InversedBell5Keys/Position_Files",
+    All_Pre_Treatment(_path_input_rgb_img="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_7/2021_2_6_13_1_23/virtual_reality",
+                      _path_output_root="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_7/2021_2_6_13_1_23/Ouput_General",
+                      _path_position_files="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_7/2021_2_6_13_1_23/Position_Files",
                       _rows_real_angle=80,
                       _make_unique_folder_per_session=False, _session=1,
-                      _do_Otsu=False, _do_AD=False,
+                      _do_Otsu=True, _do_AD=True,
                       _save_AD_score_images=False, _save_BSAS_images=False,
                       _bsas_threshold=1)
