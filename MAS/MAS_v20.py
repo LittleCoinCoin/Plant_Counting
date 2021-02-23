@@ -293,6 +293,10 @@ class ReactiveAgent_Leader(object):
         self.With_Neighbour_Overlap = [False, False, False, False]
         self.exploration_factor = 4
         self.shrinking_factor = 2
+        self.area_CS = 0
+        self.area_CS2 = 0
+        self.area_CS3 = 0
+        self.RAs_local_positions = []
         
         self.RAs_square_init()
         #self.RAs_border_init()
@@ -428,10 +432,9 @@ class ReactiveAgent_Leader(object):
         Added to accomodate the new growing strategy of the RAL
         """
         
-        self.RA_list_card = self.Add_One_Layer_of_RAs([self.group_size,
-                                                         -self.group_size,
-                                                         self.group_size,
-                                                         -self.group_size])
+        _grp_s= int(0.3*self.group_size)
+        self.RA_list_card = self.Add_One_Layer_of_RAs([_grp_s,-_grp_s,
+                                                       _grp_s,-_grp_s])
                 
         self.RA_list = self.Flatten_Layer(self.RA_list_card)
         
@@ -877,78 +880,10 @@ class ReactiveAgent_Leader(object):
                     self.nb_RAs_card[_border_index_1] += len(_x_RAs)
                 
                 self.RA_list_card[_border_index_2] = _y_RAs + self.RA_list_card[_border_index_2]
-    
-# =============================================================================
-#     def Compute_Surface(self):
-#         """
-#         Counts the number of white pixels in the area scanned by the RAL. The 
-#         search of white pixels uses the Pixel agents as seeds.
-#         """
-#         self.nb_contiguous_white_pixel = 0 #reset
-#         
-#         #print("self.group_size", self.group_size)
-#         square_height = self.Borders_Distance[0]+abs(self.Borders_Distance[1])-2
-#         square_width = self.Borders_Distance[2]+abs(self.Borders_Distance[3])-2
-# 
-#         surface_print=np.zeros((square_height,square_width))
-#         
-#         directions = [(0,1), (0,-1), (1,0), (-1,0)] #(x, y)
-#         
-#         explorers = []
-#         nb_explorers = 0
-#         
-#         for _RA in self.RA_list_card[0][1:-1]:
-#             for k in range (-self.group_step,
-#                             -self.Borders_Distance[0]+self.Borders_Distance[1],
-#                             -self.group_step):
-#                 explorers += [(_RA.local_x, k+abs(self.Borders_Distance[1]))]
-#                 nb_explorers += 1
-#         #print("nb_explorers", nb_explorers)
-#         #nb_op = 0
-#         while nb_explorers > 0:
-#             print_row = explorers[0][1]+self.group_size#row coord in surface print array
-#             print_col = explorers[0][0]+self.group_size#column coord in surface print array
-#             
-#             image_row = self.y+explorers[0][1]#row coord in image array
-#             image_col = self.x+explorers[0][0]#col coord in image array
-#             
-#             if (image_row < self.img_array.shape[0] and 
-#                 image_col < self.img_array.shape[1] and
-#                 print_row < surface_print.shape[0] and 
-#                 print_col < surface_print.shape[1]):
-#                 if (self.img_array[image_row][image_col][0] > 220):#if the pixel is white
-#                     surface_print[print_row][print_col]=2
-#                     self.nb_contiguous_white_pixel +=1
-#                     
-#                     for _d in directions:
-#                         if (0 <= print_row + _d[1] < square_height and
-#                             0 <= print_col + _d[0] < square_width):#if in the bounds of the surface_print array size
-#                             if (surface_print[print_row + _d[1]][print_col + _d[0]] == 0):#if the pixel has not an explorer already
-#                                 
-#                                 surface_print[print_row+_d[1]][print_col+_d[0]]=1#we indicate that we have added the coords to the explorers
-#                                 
-#                                 new_explorer_x = print_col-self.group_size + _d[0]
-#                                 new_explorer_y = print_row-self.group_size + _d[1]
-#                                 explorers += [(new_explorer_x, 
-#                                                new_explorer_y)]
-#                                 nb_explorers += 1
-#             
-#             explorers = explorers[1:]
-#             nb_explorers -= 1
-#             
-#             #nb_op+=1
-#         self.white_contigous_surface = self.nb_contiguous_white_pixel/(square_height*square_width)
-# =============================================================================
-# =============================================================================
-#         print(surface_print)
-#         print("nb_white_pixels", self.nb_contiguous_white_pixel)
-#         print("surface_white_pixels", self.white_contigous_surface)
-# =============================================================================
         
     def Is_Fixed(self):
         if (self.nb_RAs_Fixed/self.nb_RAs > 0.9):
             self.Fixed = True
-                
     
     def Extract_RAs_Locals(self):
         """
@@ -972,11 +907,11 @@ class ReactiveAgent_Leader(object):
         total = self.RAs_local_positions[0]+self.RAs_local_positions[2][::-1]+\
                 self.RAs_local_positions[1][::-1]+self.RAs_local_positions[3]
         
-        self.area = 0
+        self.area_CS = 0
         for i in range (self.nb_RAs-1):
-            self.area += 0.5*(total[i+1][1]+total[i][1])*(total[i+1][0]-total[i][0])
+            self.area_CS += 0.5*(total[i+1][1]+total[i][1])*(total[i+1][0]-total[i][0])
         
-        self.area += 0.5*(total[1][1]+total[-1][1])*(total[0][0]-total[-1][0])
+        self.area_CS += 0.5*(total[1][1]+total[-1][1])*(total[0][0]-total[-1][0])
     
     def Initialize_Surface_Explorers(self, _border_index):
         """
@@ -1016,7 +951,48 @@ class ReactiveAgent_Leader(object):
                     nb_explorers += 1
         
         return explorers, nb_explorers
+    
+    def Compute_Surface_3(self):
+        """
+        Computes the area as a number of white pixels defined in the rectangle
+        formed by the borders extremums
+        """
+        self.area_CS3 = 0 #reset
+        self.Extract_RAs_Locals()
+        
+        #print("self.group_size", self.group_size)
+        square_height = self.Borders_Distance[0]-self.Borders_Distance[1]
+        square_width = self.Borders_Distance[2]-self.Borders_Distance[3]
+        
+# =============================================================================
+#         search_space_array = np.zeros((square_height+1,
+#                                        square_width+1))
+# =============================================================================
+        
+        anchor_x = self.x + self.Borders_Distance[3]
+        anchor_y = self.y + self.Borders_Distance[1]
+        
+        for _r in range(square_height+1):
+            for _c in range(square_width+1):
                 
+                _x = anchor_x + _c
+                _y = anchor_y + _r
+                
+                if (0<=_y<self.img_array.shape[0] and 0<=_x<self.img_array.shape[1]):
+                    if self.img_array[_y][_x][0] > 220:
+                        self.area_CS3 += 1
+                        
+# =============================================================================
+#                         search_space_array[_r][_c] = 1
+# =============================================================================
+                        
+# =============================================================================
+#         fig = plt.figure(figsize=(5,5),dpi=300)
+#         ax = fig.add_subplot(111)
+#         ax.imshow(search_space_array)
+# =============================================================================
+        
+    
     def Compute_Surface_2(self):
         """
         Computes the area as a number of white pixels within the polygone defined 
@@ -1024,7 +1000,7 @@ class ReactiveAgent_Leader(object):
         """
         self.Extract_RAs_Locals()
         
-        self.area = 0 #reset
+        self.area_CS2 = 0 #reset
         
         #print("self.group_size", self.group_size)
         square_height = self.Borders_Distance[0]-self.Borders_Distance[1]
@@ -1066,7 +1042,7 @@ class ReactiveAgent_Leader(object):
                 0 <= print_col < surface_print.shape[1]):
                 if (self.img_array[image_row][image_col][0] > 220):#if the pixel is white
                     surface_print[print_row][print_col]=2
-                    self.area +=1
+                    self.area_CS2 +=1
                     
                     for _d in directions:
                         if (0 <= print_row + _d[1] < square_height and
@@ -1245,6 +1221,8 @@ class Row_Agent(object):
         self.nb_Fixed_RALs = 0
         
         self.extensive_init = False
+        
+        
         
 # =============================================================================
 #         print("Done")
@@ -1634,7 +1612,19 @@ class Row_Agent(object):
                 self.nb_RALs -= 1
             else:
                 i += 1
-        
+    
+    def Destroy_Small_RALs(self):
+        i = 0
+        while i < self.nb_RALs:
+            if (self.RALs[i].nb_RAs < 0.25*(4*2*self.RALs[i].group_size+1)/self.group_step):
+                if (self.RALs[i].Fixed):
+                    self.nb_Fixed_RALs -= 1
+                self.Destroy_RALs(i, i+1, self.nb_RALs)
+                self.nb_RALs -= 1
+                
+            else:
+                i += 1
+    
     def Adapt_RALs_group_size_2(self):
         for _RAL in self.RALs:
             if (not _RAL.Fixed):
@@ -1644,7 +1634,9 @@ class Row_Agent(object):
     
     def Get_RALs_Surface(self):
         for _RAL in self.RALs:
+            _RAL.Compute_Surface()
             _RAL.Compute_Surface_2()
+            _RAL.Compute_Surface_3()
     
     def Set_Up_RALs_Growth_Mode(self):
         for _RAL in self.RALs:
@@ -1699,6 +1691,8 @@ class Agents_Director(object):
         
         self.group_size = _group_size
         self.group_step = _group_step
+        
+        self.InterPlant_Y = 0
         
         self.RALs_fuse_factor = _RALs_fuse_factor
         self.RALs_fill_factor = _RALs_fill_factor
@@ -1882,6 +1876,10 @@ class Agents_Director(object):
     def ORDER_RowAs_to_Destroy_Low_Activity_RALs(self):
         for _RowA in self.RowAs:#[10:11]:
             _RowA.Destroy_Low_Activity_RALs()
+    
+    def ORDER_ROWAs_to_Destroy_Small_RALs(self):
+        for _RowA in self.RowAs:
+            _RowA.Destroy_Small_RALs()
     
     def ORDER_RowAs_to_Adapt_RALs_sizes(self):
         for _RowA in self.RowAs:#[10:11]:
@@ -2181,6 +2179,8 @@ class Simulation_MAS(object):
             
             i += 1
         
+        if (self.follow_simulation):
+            self.Show_Adjusted_And_RALs_positions()
         #self.AD.ORDER_RowAs_for_RALs_Surface_Compute()
         
         if (i == self.steps):
@@ -2197,6 +2197,9 @@ class Simulation_MAS(object):
         print()
         print("Starting Growth Simulation:")
         self.AD.Switch_From_Search_To_Growth()
+        
+        if (len(self.RALs_recorded_count)==0):
+            self.Count_RALs()
         
         self.steps = _steps
         self.max_steps_reached = False
@@ -2225,7 +2228,10 @@ class Simulation_MAS(object):
             
             if (self.follow_simulation):
                 self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_E_{0}_3".format(i+1)) 
+                                                      _save_name=self.simulation_name+"_E_{0}_3".format(i+1))
+            
+            self.AD.ORDER_ROWAs_to_Destroy_Small_RALs()
+            self.Count_RALs()
             
             nb_fixed = self.AD.Count_nb_Fixed_RAL()
             
@@ -2289,7 +2295,9 @@ class Simulation_MAS(object):
                  "RAs_Local_Positions" : _RAL.RAs_local_positions,
                  "detected_plant" : "",
                  "RAL_group_size": _RAL.group_size,
-                 "RAL_area": _RAL.area}
+                 "RAL_area_CS": _RAL.area_CS,
+                 "RAL_area_CS2": _RAL.area_CS2,
+                 "RAL_area_CS3": _RAL.area_CS3}
             self.RALs_nested_positions+=[_row]
         print()
         
@@ -2373,8 +2381,10 @@ class Simulation_MAS(object):
                             y += [_RA.global_y]
                         plt.plot(x, y, color=_c[i], linewidth=1, markersize = 1)#, marker="o")
         
-        plt.xlim(170, 270)
-        plt.ylim(1350, 1450)
+# =============================================================================
+#         plt.xlim(170, 270)
+#         plt.ylim(1350, 1450)
+# =============================================================================
         
                 
     def Show_Adjusted_Positions(self, _ax = None, _color = "b"):
@@ -2610,7 +2620,8 @@ class MetaSimulation(object):
                              _coerced_X = False,
                              _coerced_Y = False,
                              _analyse_and_remove_Rows = False,
-                             _rows_edges_exploration = False):
+                             _rows_edges_exploration = False,
+                             _growth_monitoring_only = False):
 
         """
         Launch an MAS simulation for each images. The raw images are labelled.
@@ -2622,6 +2633,7 @@ class MetaSimulation(object):
         self.coerced_Y = _coerced_Y
         self.analyse_and_remove_Rows = _analyse_and_remove_Rows
         self.rows_edges_exploration = _rows_edges_exploration
+        self.growth_monitoring = _growth_monitoring_only
         
 # =============================================================================
 #         if (self.nb_images > 1):
@@ -2646,11 +2658,12 @@ class MetaSimulation(object):
                                         self.data_adjusted_position_files[i])
                 MAS_Simulation.Initialize_AD()
                 
-                MAS_Simulation.Perform_Search_Simulation(self.simulation_step,
-                                                                  self.coerced_X,
-                                                                  self.coerced_Y,
-                                                                  self.analyse_and_remove_Rows,
-                                                                  self.rows_edges_exploration)
+                if (not _growth_monitoring_only):
+                    MAS_Simulation.Perform_Search_Simulation(self.simulation_step,
+                                                                      self.coerced_X,
+                                                                      self.coerced_Y,
+                                                                      self.analyse_and_remove_Rows,
+                                                                      self.rows_edges_exploration)
                 MAS_Simulation.Perform_Growth_Simulation(self.simulation_step,
                                                                   self.coerced_X,
                                                                   self.coerced_Y,
@@ -2815,6 +2828,9 @@ class MetaSimulation(object):
             _name+="_anrR2"
         if (self.rows_edges_exploration):
             _name+="_REE"
+        if (self.growth_monitoring):
+            _name += "_GM"
+        
         return _name
     
     def Save_MetaSimulation_Results(self):
