@@ -5,7 +5,7 @@ Created on Sat Feb  6 14:17:38 2021
 @author: eliot
 
 Here we include the functions used to process the labelled images generated with
-Unity
+Unity. This processes the json captures of 1 field at 1 growth stage.
 
 v1:
     - We compute the bounding box ourselve thanks to the Mesh bounds accessible
