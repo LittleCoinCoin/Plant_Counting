@@ -209,7 +209,7 @@ def All_Fourier_Analysis(_path_input_output,
                          _session_number=1,
                          _bin_div_X=2, _bin_div_Y=4):
     
-    ################## Paths and parameters definition
+################## Paths and parameters definition
     
     path_input_root = _path_input_output+"/Output/Session_"+str(_session_number)
     path_output_root = _path_input_output+"/Output_FA/Session_"+str(_session_number)
