@@ -4,7 +4,8 @@ Created on Sun Sep 13 12:23:30 2020
 
 @author: eliott
 
-Manual labelling of an image
+Manual labelling of the positions of plants on an image.
+
 The user indicate the directory where the images are stored and the index of 
 the image in the corresponding list.
 Then, on execution, the user can click on images to store the coordinates of the
@@ -55,15 +56,15 @@ def get_file_lines(path_csv_file):
 session_number = 1
 unity_date = "images_niort_decoupees"
     
-path_input_root = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Images"
-path_input_raw = path_input_root+"/"+unity_date+"/Capture"
+path_input_root = ""
+path_input_raw = ""
 names_input_raw = os.listdir(path_input_raw)
 
-path_input_OTSU = path_input_root+"/Output_Niort/Capture"+"/Otsu"
+path_input_OTSU = ""
 names_input_OTSU = os.listdir(path_input_OTSU)
 
 
-path_output_position_files=path_input_root+"/"+unity_date+"/Position_Files"
+path_output_position_files = ""
 
 # =============================================================================
 # Data Collection

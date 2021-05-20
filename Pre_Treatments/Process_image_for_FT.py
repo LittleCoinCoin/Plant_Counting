@@ -174,8 +174,8 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
 
 if (__name__=="__main__"):
     
-    All_Pre_Treatment(_path_input_rgb_img="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Datasets/Test",
-                      _path_output_root="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Ouput_General",
+    All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
+                      _path_output_root="../Tutorial/Output_General/Set1",
                       _make_unique_folder_per_session=True, _session=1,
                       _do_Otsu=True, _do_AD=True,
                       _save_AD_score_images=False, _save_BSAS_images=False,

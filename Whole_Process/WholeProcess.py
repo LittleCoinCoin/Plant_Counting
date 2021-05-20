@@ -46,8 +46,8 @@ def CompleteProcess(_path_input_rgb_img, _path_output_root,
                     _RALs_fuse_factor, _RALs_fill_factor)
 
 if (__name__=="__main__"):
-    CompleteProcess(_path_input_rgb_img="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Datasets/Test",
-                    _path_output_root="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Ouput_General",
+    CompleteProcess(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
+                    _path_output_root="../Tutorial/Output_General/Set1",
                     
                     _make_unique_folder_per_session=False, _session=1,
                     _do_Otsu=True, _do_AD=True,

@@ -111,8 +111,8 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     
 if (__name__=="__main__"):
 
-    All_Simulations(_path_input_rgb_img="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Datasets/Test",
-                    _path_PreTreatment_and_FA="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Ouput_General",
+    All_Simulations(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
+                    _path_PreTreatment_and_FA="../Tutorial/Output_General/Set1",
                     _session_number=1,
                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)

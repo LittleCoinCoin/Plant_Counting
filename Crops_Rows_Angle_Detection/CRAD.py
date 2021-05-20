@@ -68,13 +68,7 @@ class CRAD:
                 _path_output_histogram
                ):
         """
-        _path_original_img leads to the original picture of the field
-
-        _path_txt leads to a text files which contains the coordinates of all centroids
-        obtained through bsas implementation or dbscan
-
-        _display_all_steps should be set to True if the user wants to see the results of the successive steps of the process
-        (images with the detected lines are displayed)
+        TO DO
         """
         
         self.img_id = img_id

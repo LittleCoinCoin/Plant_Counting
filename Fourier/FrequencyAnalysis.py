@@ -308,6 +308,6 @@ def All_Fourier_Analysis(_path_input_output,
 
 if (__name__ == "__main__"):
     
-    All_Fourier_Analysis(_path_input_output="C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols/Code/Ouput_General",
+    All_Fourier_Analysis(_path_input_output="../Tutorial/Output_General/Set1",
                          _session_number=1,
                          _bin_div_X=2, _bin_div_Y=4)

@@ -41,30 +41,19 @@ def get_file_lines(path_csv_file):
 # =============================================================================
 #path of the images 
 ### TO BE CHANGED AS PER USER NEED
-session_number = 3
-unity_date = "2020_7_30_15_10_36"
+session_number = 1
     
-path_input_root = "C:/Users/eliot/Documents/Scolarité/AgroParisTech/3A/Stage_Tournesols"
-# =============================================================================
-# path_input_raw = path_input_root+"/Unity/Screenshots/"+unity_date+"/virtual_reality"
-# path_input_adjusted_position_files = path_input_root+"/Travaux_Fil_Rouge/code_tournesol_4/Output_FT/Session_{0}/Adjusted_Position_Files".format(session_number)
-# path_input_OTSU = path_input_root+"/Travaux_Fil_Rouge/code_tournesol_4/Output/Session_{0}/Otsu_R".format(session_number)
-# path_input_PLANT_FT_PRED = path_input_root+"/Travaux_Fil_Rouge/code_tournesol_4/Output_FT/Session_{0}/Plant_FT_Predictions".format(session_number)
-# =============================================================================
+path_input_root = "../Tutorial"
 
-path_input_raw = path_input_root+"/Unity/Screenshots/MetaCapture_Session_{0}".format(session_number)+\
-                "/"+unity_date+"/virtual_reality"
-path_input_adjusted_position_files = path_input_root+"/Travaux_Fil_Rouge/code_tournesol_4/Output_FT/MetaCapture_Session_{0}".format(session_number)+\
-                                    "/"+unity_date+\
-                                    "/Adjusted_Position_Files"
-path_input_OTSU = path_input_root+"/Travaux_Fil_Rouge/code_tournesol_4/Output/MetaCapture_Session_{0}".format(session_number)+\
-                "/"+unity_date+"/Otsu_R"
-path_input_PLANT_FT_PRED = path_input_root+"/Travaux_Fil_Rouge/code_tournesol_4/Output_FT/MetaCapture_Session_{0}".format(session_number)+\
-                            "/"+unity_date + \
-                            "/Plant_FT_Predictions"
+path_input_raw = path_input_root+"/Data/Non-Labelled/Set1"
+#path_input_adjusted_position_files = ""
+path_input_OTSU = path_input_root+"/Output_General/Set1/Output/Session_"+\
+                            str(session_number)+"/Otsu_R"
+path_input_PLANT_FT_PRED = path_input_root+"/Output_General/Set1/Output_FA/Session_"+\
+                            str(session_number)+"/Plant_FT_Predictions"
 
 names_input_raw = os.listdir(path_input_raw)
-names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
+#names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
 names_input_OTSU = os.listdir(path_input_OTSU)
 names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
 
@@ -78,9 +67,11 @@ subset_size = 4
 data_input_raw = import_data(path_input_raw,
                              names_input_raw[:subset_size],
                              get_img_array)
-data_adjusted_position_files = import_data(path_input_adjusted_position_files,
-                                           names_input_adjusted_position_files[:subset_size],
-                                           get_file_lines)
+# =============================================================================
+# data_adjusted_position_files = import_data(path_input_adjusted_position_files,
+#                                            names_input_adjusted_position_files[:subset_size],
+#                                            get_file_lines)
+# =============================================================================
 data_input_OTSU = import_data(path_input_OTSU,
                               names_input_OTSU[:subset_size],
                               get_img_array)
@@ -103,7 +94,7 @@ RALs_fill_factor = 1.5
 _image_index = 0
 
 print(names_input_OTSU[_image_index])
-print(names_input_adjusted_position_files[_image_index])
+#print(names_input_adjusted_position_files[_image_index])
 print(names_input_PLANT_FT_PRED[_image_index])
 
 # =============================================================================
@@ -116,7 +107,7 @@ MAS_Simulation = MAS.Simulation_MAS(data_input_raw[_image_index],
                                     RAs_group_size, RAs_group_steps,
                                     RALs_fuse_factor, RALs_fill_factor,
                                     [0,0],
-                                    data_adjusted_position_files[_image_index])
+                                    None)#data_adjusted_position_files[_image_index])
 MAS_Simulation.Initialize_AD()
 MAS_Simulation.Perform_Simulation_newEndCrit(Simulation_steps,
                                              _coerced_X=True,
@@ -147,6 +138,6 @@ MAS_Simulation.Perform_Simulation_newEndCrit(Simulation_steps,
 # print("FP =", MAS_Simulation.FP)
 # =============================================================================
 
-MAS_Simulation.Show_Adjusted_And_RALs_positions()
-MAS_Simulation.Show_nb_RALs()
-MAS_Simulation.Show_RALs_Deicision_Scores()
+MAS_Simulation.Show_RALs_Position(_recorded_position_indeces=[-1], _colors=['g'])
+#MAS_Simulation.Show_nb_RALs()
+#MAS_Simulation.Show_RALs_Deicision_Scores()

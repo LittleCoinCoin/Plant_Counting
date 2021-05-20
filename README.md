@@ -20,6 +20,7 @@ the procedure will consist in [Pre-Processing](https://github.com/LittleCoinCoin
 Plants](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Documentation/MAS/Multi_Images_Simulation_v12bis.md) (with the MAS). It is possible to Rune all three steps in one go with the script named *WholeProcess.py*; or 
 all three steps separately with the scripts *Process_image_for_FT.py*, *FrequencyAnalysis.py* and *Multi_Images_Simulation_v12bis.py*.
 Further details about each scripts are available in the Documentation.
+A little [tutorial](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Tutorial/Tutorial.md) is available
 
 # References
  * The paper presenting the method:

@@ -2,7 +2,11 @@
 """
 Created on Wed Jan 29 13:36:47 2020
 
-@author: Le groupe tournesol
+@author:
+    Naomie Berda
+    Léa Courteille
+    Grison William
+    Lucas Mathieu
 """
 
 import os
