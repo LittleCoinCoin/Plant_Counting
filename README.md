@@ -25,5 +25,7 @@ A little [tutorial](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Re
 # References
  * The paper presenting the method:
  >Jacopin, E.; Berda, N.; Courteille, L.; Grison, W.; Mathieu, L.; Cornuéjols, A. and Martin, C. (2021). Using Agents and Unsupervised Learning for Counting Objects in Images with Spatial Organization. In Proceedings of the 13th International Conference on Agents and Artificial Intelligence - Volume 2: ICAART, ISBN 978-989-758-484-8 ISSN 2184-433X, pages 688-697. DOI: [10.5220/0010228706880697](https://www.scitepress.org/PublicationsDetail.aspx?ID=oMt1HgWONLQ=&t=1)
- * There is also a [video](https://youtu.be/85YllTyfxaQ) for a more concise view than the paper.
+ * There is also a video for a more concise view than the paper:
+ 
+ [![Alt text](https://img.youtube.com/vi/85YllTyfxaQ/0.jpg)](https://www.youtube.com/watch?v=85YllTyfxaQ)
  
