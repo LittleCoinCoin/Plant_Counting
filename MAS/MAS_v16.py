@@ -101,13 +101,13 @@ class ReactiveAgent(object):
     
     def Move_Based_On_RAL(self, _RAL_x, _RAL_y):
         """
-        Update the position of the RAL based on the order given by the AD (agent
-        director).
-        _ADO_x (int):
-            X coordinate of the target point (column of the image array)
+        Update the position of the RA based on the position of its RAL (Reactive
+        Agent Leader).
+        _RAL_x (int):
+            X coordinate of the RAL (column of the image array)
         
-        _ADO_y (int):
-            Y coordinate of the target point (line of the image array)
+        _RAL_y (int):
+            Y coordinate of the RAL (line of the image array)
         """
         self.global_x = _RAL_x + self.local_x
         self.global_y = _RAL_y + self.local_y
