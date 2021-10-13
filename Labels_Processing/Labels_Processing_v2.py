@@ -526,16 +526,8 @@ def Sample_Line(_para, _x_limits, _sample_dividor = 10):
                                                             _step)]
 
 if (__name__ == "__main__"):
-# =============================================================================
-#     Produce_Adjusted_Position_Files(
-#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/Dataset",
-#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05"+"/Ouput_General/Output/Session_{0}".format(1)+"/Adjusted_Position_Files",
-#             80,
-#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB",
-#             os.listdir("D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB"))
-# =============================================================================
     
-    root_path = "C:/Users/eliot/Documents/Education/APT/Stage_Tournesols/Data/Stage_Jules_Marcai"
+    root_path = "../Tutorial/"
     nb_fields = 100
     nb_gs = 3
     for i in range (nb_fields):
@@ -546,9 +538,3 @@ if (__name__ == "__main__"):
                                             80,
                                             gs_path+"/RGB",
                                             os.listdir(gs_path+"/RGB"))
-# =============================================================================
-#     Compute_Pixels_In_Plant_Bounding_Boxes(
-#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_8/2021_2_14_22_28_19/Position_Files",
-#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_8/2021_2_14_22_28_19/Ouput_General"+"/Output/Session_{0}".format(1)+"/Plant_Bounding_Boxes",
-#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_8/2021_2_14_22_28_19/Ouput_General"+"/Output/Session_{0}".format(1)+"/Otsu")
-# =============================================================================

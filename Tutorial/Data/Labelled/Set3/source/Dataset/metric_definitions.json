@@ -1,0 +1,53 @@
+{
+  "version": "0.0.1",
+  "metric_definitions": [
+    {
+      "id": "db1b258e-d1d0-41b6-8751-16f601a2e230",
+      "name": "scenario_iteration",
+      "description": "Iteration information for dataset sequences"
+    },
+    {
+      "id": "5ba92024-b3b7-41a7-9d3f-c03a6a8ddd01",
+      "name": "rendered object info",
+      "description": "Information about each labeled object visible to the sensor",
+      "spec": [
+        {
+          "label_id": 1,
+          "label_name": "Plant_A2"
+        },
+        {
+          "label_id": 2,
+          "label_name": "Plant_B1"
+        },
+        {
+          "label_id": 3,
+          "label_name": "Plant_B3B4"
+        },
+        {
+          "label_id": 4,
+          "label_name": "Plant_D1"
+        },
+        {
+          "label_id": 5,
+          "label_name": "Plant_D2"
+        },
+        {
+          "label_id": 6,
+          "label_name": "Plant_D3"
+        },
+        {
+          "label_id": 7,
+          "label_name": "Plant_E1"
+        },
+        {
+          "label_id": 8,
+          "label_name": "Plant_F3"
+        },
+        {
+          "label_id": 9,
+          "label_name": "Weed"
+        }
+      ]
+    }
+  ]
+}

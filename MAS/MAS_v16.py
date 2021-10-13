@@ -1327,10 +1327,15 @@ class Simulation_MAS(object):
         self.corrected_adjusted_plant_positions = []
         self.real_plant_keys = []
         for adj_pos_string in self.ADJUSTED_img_plant_positions:
-            [_rx, _ry, x, y] = adj_pos_string.split(",")
-            self.corrected_adjusted_plant_positions += [[int(x),
-                                                        self.OTSU_img_array.shape[0]-int(y)]]
-            self.real_plant_keys += [_rx + "_" + _ry]
+# =============================================================================
+#             [_rx, _ry, x, y] = adj_pos_string.split(",")
+#             self.corrected_adjusted_plant_positions += [[int(x),
+#                                                         self.OTSU_img_array.shape[0]-int(y)]]
+#             self.real_plant_keys += [_rx + "_" + _ry]
+# =============================================================================
+            self.corrected_adjusted_plant_positions += [[int(adj_pos_string["rotated_x"]),
+                                                        int(adj_pos_string["rotated_y"])]]
+            self.real_plant_keys += [str(adj_pos_string["instance_id"])]
         
     def Count_RALs(self):
         RALs_Count = 0
@@ -1862,8 +1867,12 @@ class MetaSimulation(object):
         """
         for i in range (self.nb_images):
             for adj_pos_string in self.data_adjusted_position_files[i]:
-                [_rx, _ry, x, y] = adj_pos_string.split(",")
-                self.whole_field_counted_plants[_rx + "_" + _ry]=0
+# =============================================================================
+#                 [_rx, _ry, x, y] = adj_pos_string.split(",")
+#                 self.whole_field_counted_plants[_rx + "_" + _ry]=0
+# =============================================================================
+                self.whole_field_counted_plants[str(adj_pos_string["instance_id"])]=0
+
     
     def Add_Simulation_Results(self, _image_index, _MAS_Simulation):
         """

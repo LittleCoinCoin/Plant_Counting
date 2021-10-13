@@ -10,7 +10,7 @@ import json
 import numpy as np
 from PIL import Image
 
-import MAS_v20 as MAS
+import MAS_v16 as MAS
 
 os.chdir("../Utility")
 import general_IO as gIO
@@ -41,7 +41,7 @@ def get_file_lines(path_csv_file):
 
 def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
                     _labelled_images = False,
-                    _session_number=1, _growth_monitoring = False, _path_MAS_initialize = None,
+                    _session_number=1,
                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5):
 
@@ -51,10 +51,7 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     #
     path_input_OTSU = _path_PreTreatment_and_FA+"/Output/Session_"+str(_session_number)+"/Otsu_R"
     
-    if (not _growth_monitoring):
-        path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
-    else:
-        path_input_PLANT_FT_PRED = _path_MAS_initialize
+    path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
     
     path_output = _path_PreTreatment_and_FA+"/Output_Meta_Simulation/Session_"+str(_session_number)
     gIO.check_make_directory(path_output)
@@ -115,6 +112,8 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
         MetaSimulation.Launch_Meta_Simu_Labels(
                                     _coerced_X = True,
                                     _coerced_Y = False,
+                                    _extensive_Init = True,
+                                    _new_end_crit=True,
                                     _analyse_and_remove_Rows = True,
                                     _rows_edges_exploration = True)
     
@@ -123,14 +122,24 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
         MetaSimulation.Launch_Meta_Simu_NoLabels(
                                     _coerced_X = True,
                                     _coerced_Y = False,
+                                    _extensive_Init = True,
+                                    _new_end_crit=True,
                                     _analyse_and_remove_Rows = True,
                                     _rows_edges_exploration = True)
     
 if (__name__=="__main__"):
+# ========================== FOR NON-LABELLED IMAGES ======================== #
+# =============================================================================
+#     All_Simulations(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
+#                     _path_PreTreatment_and_FA="../Tutorial/Output_General/Set1",
+#                     _labelled_images = False,_session_number=1,
+#                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
+#                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)
+# =============================================================================
 
-    All_Simulations(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
-                    _path_PreTreatment_and_FA="../Tutorial/Output_General/Set1",
-                    _labelled_images = True,
-                    _session_number=1, _growth_monitoring = False,_path_MAS_initialize = None,
+# ========================== FOR LABELLED IMAGES ============================ #
+    All_Simulations(_path_input_rgb_img="../Tutorial/Data/Labelled/Set3/Processed/Field_0/GrowthStage_0/RGB",
+                    _path_PreTreatment_and_FA="../Tutorial/Output_General/Set3",
+                    _labelled_images = True, _session_number=1,
                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)

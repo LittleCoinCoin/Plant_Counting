@@ -191,21 +191,24 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
                                              _rows_real_angle,
                                              _path_input_rgb_img,
                                              list_images)
-        
-# =============================================================================
-#         path_output_bounding_boxes_files = path_output + "/Plant_Bounding_Boxes"
-#         gIO.check_make_directory(path_output_bounding_boxes_files)
-#         LblP.Compute_Pixels_In_Plant_Bounding_Boxes(
-#             _path_position_files,
-#             path_output_bounding_boxes_files,
-#             path_output_Otsu)
-# =============================================================================
 
 if (__name__=="__main__"):
+
+# ========================== FOR NON-LABELLED IMAGES ======================== #
+# =============================================================================
+#   All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
+#                   _path_output_root="../Tutorial/Output_General/Set1",
+#                   _path_position_files=None,
+#                   _make_unique_folder_per_session=False, _session=1,
+#                   _do_Otsu=True, _do_AD=True,
+#                   _save_AD_score_images=False, _save_BSAS_images=False,
+#                   _bsas_threshold=1)
+# =============================================================================
     
-    All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
-                      _path_output_root="../Tutorial/Output_General/Set1",
-                      _path_position_files="D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_7/2021_2_6_13_1_23/Position_Files",
+# ========================== FOR LABELLED IMAGES ============================ #
+    All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Labelled/Set3/Processed/Field_0/GrowthStage_0/RGB",
+                      _path_output_root="../Tutorial/Output_General/Set3",
+                      _path_position_files="../Tutorial/Data/Labelled/Set3/Processed/Field_0/GrowthStage_0/Dataset",
                       _rows_real_angle=80,
                       _make_unique_folder_per_session=False, _session=1,
                       _do_Otsu=True, _do_AD=True,

@@ -155,14 +155,14 @@ def Partition_List(_list, _length, _step):
 
 if __name__=="__main__":
 
-    nb_fields = 2
-    nb_growth_stages = 2
+    nb_fields = 1
+    nb_growth_stages = 1
     nb_images_per_gs = 4
     nb_annotations = 2
     nb_metrics = 1
     
     
-    path_data = "D:/Projet/Unity/HDRP_PGoCF/Datasets/MetaCapture_UP_Test"
+    path_data = "../Tutorial/Data/Labelled/Set3"
     path_source = path_data + "/Source"
     path_processed = path_data + "/Processed"
     

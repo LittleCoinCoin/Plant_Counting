@@ -1,0 +1,118 @@
+{
+   "rgb_68.png": {
+      "Time_per_steps": [
+         0.9235188961029053,
+         0.7238306999206543,
+         0.4033048152923584,
+         0.3115394115447998,
+         0.2767672538757324,
+         0.22716832160949707
+      ],
+      "Time_per_steps_detailes": [],
+      "Image_Labelled": true,
+      "NB_labelled_plants": 193,
+      "NB_RALs": 200,
+      "TP": 192,
+      "FN": 1,
+      "FP": 8,
+      "InterPlantDistance": 56,
+      "RAL_Fuse_Factor": 0.5,
+      "RALs_fill_factor": 1.5,
+      "RALs_recorded_count": [
+         622,
+         351,
+         215,
+         203,
+         202,
+         200,
+         200
+      ]
+   },
+   "rgb_70.png": {
+      "Time_per_steps": [
+         0.9583275318145752,
+         0.8083388805389404,
+         0.43752503395080566,
+         0.35265588760375977,
+         0.2658553123474121,
+         0.21228885650634766
+      ],
+      "Time_per_steps_detailes": [],
+      "Image_Labelled": true,
+      "NB_labelled_plants": 184,
+      "NB_RALs": 192,
+      "TP": 183,
+      "FN": 1,
+      "FP": 8,
+      "InterPlantDistance": 49,
+      "RAL_Fuse_Factor": 0.5,
+      "RALs_fill_factor": 1.5,
+      "RALs_recorded_count": [
+         627,
+         390,
+         225,
+         199,
+         193,
+         192,
+         192
+      ]
+   },
+   "rgb_72.png": {
+      "Time_per_steps": [
+         0.8580522537231445,
+         0.7150974273681641,
+         0.3956873416900635,
+         0.2881758213043213,
+         0.2480006217956543
+      ],
+      "Time_per_steps_detailes": [],
+      "Image_Labelled": true,
+      "NB_labelled_plants": 191,
+      "NB_RALs": 196,
+      "TP": 190,
+      "FN": 1,
+      "FP": 6,
+      "InterPlantDistance": 56,
+      "RAL_Fuse_Factor": 0.5,
+      "RALs_fill_factor": 1.5,
+      "RALs_recorded_count": [
+         557,
+         341,
+         203,
+         197,
+         196,
+         196
+      ]
+   },
+   "rgb_74.png": {
+      "Time_per_steps": [
+         1.0153579711914062,
+         0.8402237892150879,
+         0.4930248260498047,
+         0.32831597328186035,
+         0.2698695659637451,
+         0.23604989051818848,
+         0.20336008071899414
+      ],
+      "Time_per_steps_detailes": [],
+      "Image_Labelled": true,
+      "NB_labelled_plants": 187,
+      "NB_RALs": 195,
+      "TP": 186,
+      "FN": 1,
+      "FP": 9,
+      "InterPlantDistance": 48,
+      "RAL_Fuse_Factor": 0.5,
+      "RALs_fill_factor": 1.5,
+      "RALs_recorded_count": [
+         656,
+         400,
+         233,
+         204,
+         199,
+         196,
+         195,
+         195
+      ]
+   }
+}
