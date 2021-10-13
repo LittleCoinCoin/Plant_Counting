@@ -31,13 +31,11 @@ def Process_UP_Json_Output(_path_source,
 # =============================================================================
     gIO.check_make_directory(_path_processed)
     
-    captures_file = open(_path_source + "/Dataset/captures_000.json", "r")
-    captures_file_content = json.load(captures_file)
-    captures_file.close()
+    all_captures_file_content = Extract_Files_With_Prefix(_path_source+"/Dataset/", "captures")
+    captures_file_content = Aggregate_Dict_Values_List(all_captures_file_content, "captures")
     
-    metrics_file = open(_path_source + "/Dataset/metrics_000.json", "r")
-    metrics_file_content = json.load(metrics_file)
-    metrics_file.close()
+    all_metrics_file_content = Extract_Files_With_Prefix(_path_source+"/Dataset/", "metrics")
+    metrics_file_content = Aggregate_Dict_Values_List(all_metrics_file_content, "metrics")
     
 # =============================================================================
 #     Partioning per Fields
@@ -93,7 +91,7 @@ def Process_UP_Json_Output(_path_source,
         print("Generating new jsons for Field {0}/{1}".format(i+1, nb_fields))
         for j in range (_nb_growth_stages):
             print("Growth Stage {0}/{1}".format(j+1, nb_growth_stages))
-            path_field_gs = _path_processed+"/{0}/{1}".format(i,j)
+            path_field_gs = _path_processed+"/Field_{0}/GrowthStage_{1}".format(i,j)
             gIO.check_make_directory(path_field_gs+"/Dataset")
             gIO.check_make_directory(path_field_gs+"/RGB")
             
@@ -114,6 +112,27 @@ def Process_UP_Json_Output(_path_source,
             for _img in images_per_gs[i][j]:
                 shutil.copy(_path_source+"/RGB/"+_img, path_field_gs+"/RGB/"+_img)
         
+
+def Extract_Files_With_Prefix(_path, _prefix):
+    
+    all_file_names = os.listdir(_path)
+    prefix_length = len(_prefix)
+    
+    all_files_content = []
+    for _file_name in all_file_names:
+        if (_file_name[:prefix_length] == _prefix):
+        
+            captures_file = open(_path + "/" + _file_name, "r")
+            all_files_content += [json.load(captures_file)]
+            captures_file.close()
+    return all_files_content
+
+def Aggregate_Dict_Values_List(_dict_list, _key):
+    
+    for _dict in _dict_list[1:]:
+        _dict_list[0][_key] += _dict[_key]
+    
+    return _dict_list[0]
 
 def Partition_Per_Factors(_source_list, _factors_list, _root_factor):
     

@@ -51,6 +51,7 @@ def Produce_Adjusted_Position_Files( _path_position_file,
     #print(ViewPortValues)
     
     nb_imgs = len(_list_rgb_images)
+    print(nb_imgs, len(ViewPortValues))
     assert nb_imgs == len(ViewPortValues)
     
     _theta = np.deg2rad(_rows_real_angle)
@@ -525,13 +526,26 @@ def Sample_Line(_para, _x_limits, _sample_dividor = 10):
                                                             _step)]
 
 if (__name__ == "__main__"):
-    Produce_Adjusted_Position_Files(
-            "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/Dataset",
-            "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05"+"/Ouput_General/Output/Session_{0}".format(1)+"/Adjusted_Position_Files",
-            80,
-            "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB",
-            os.listdir("D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB"))
+# =============================================================================
+#     Produce_Adjusted_Position_Files(
+#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/Dataset",
+#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05"+"/Ouput_General/Output/Session_{0}".format(1)+"/Adjusted_Position_Files",
+#             80,
+#             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB",
+#             os.listdir("D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_9/2021_02_18_10_05/RGB"))
+# =============================================================================
     
+    root_path = "C:/Users/eliot/Documents/Education/APT/Stage_Tournesols/Data/Stage_Jules_Marcai"
+    nb_fields = 100
+    nb_gs = 3
+    for i in range (nb_fields):
+        for j in range (nb_gs):
+            gs_path = root_path+"/Processed/Field_{0}/GrowthStage_{1}".format(i,j)
+            Produce_Adjusted_Position_Files(gs_path+"/Dataset",
+                                            gs_path+"/Positions",
+                                            80,
+                                            gs_path+"/RGB",
+                                            os.listdir(gs_path+"/RGB"))
 # =============================================================================
 #     Compute_Pixels_In_Plant_Bounding_Boxes(
 #             "D:/Projet/Unity/HDRP_PGoCF/Datasets/Monitoring/Series_8/2021_2_14_22_28_19/Position_Files",
