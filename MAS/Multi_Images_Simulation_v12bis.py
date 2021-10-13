@@ -10,7 +10,7 @@ import json
 import numpy as np
 from PIL import Image
 
-import MAS_v16 as MAS
+import MAS_v20 as MAS
 
 os.chdir("../Utility")
 import general_IO as gIO
@@ -40,16 +40,21 @@ def get_file_lines(path_csv_file):
     return(file_content)
 
 def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
-                    _session_number=1,
+                    _labelled_images = False,
+                    _session_number=1, _growth_monitoring = False, _path_MAS_initialize = None,
                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5):
 
     # =============================================================================
     # General Path Definition
     # =============================================================================
-    #path_input_adjusted_position_files = path_root+"/Output_FT///Adjusted_Position_Files"
+    #
     path_input_OTSU = _path_PreTreatment_and_FA+"/Output/Session_"+str(_session_number)+"/Otsu_R"
-    path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
+    
+    if (not _growth_monitoring):
+        path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
+    else:
+        path_input_PLANT_FT_PRED = _path_MAS_initialize
     
     path_output = _path_PreTreatment_and_FA+"/Output_Meta_Simulation/Session_"+str(_session_number)
     gIO.check_make_directory(path_output)
@@ -59,7 +64,7 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # =============================================================================
     
     names_input_raw = os.listdir(_path_input_rgb_img)
-    #names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
+    #
     names_input_OTSU = os.listdir(path_input_OTSU)
     names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
     
@@ -69,25 +74,29 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     print("Data Collection...", end = " ")
     
     data_input_raw = import_data(_path_input_rgb_img, names_input_raw, get_img_array)
-    #data_adjusted_position_files = import_data(path_input_adjusted_position_files,
-    #                                           names_input_adjusted_position_files,
-    #                                           get_file_lines)
-    data_adjusted_position_files = None
     data_input_OTSU = import_data(path_input_OTSU, names_input_OTSU, get_img_array)
     data_input_PLANT_FT_PRED = import_data(path_input_PLANT_FT_PRED,
                                            names_input_PLANT_FT_PRED,
                                            get_json_file_content)
     
+    if (_labelled_images):
+        path_input_adjusted_position_files = _path_PreTreatment_and_FA+ \
+                                                "/Output/Session_"+str(_session_number)+"/Adjusted_Position_Files"
+        names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
+        data_adjusted_position_files = import_data(path_input_adjusted_position_files,
+                                               names_input_adjusted_position_files,
+                                               get_json_file_content)
+    else:
+        data_adjusted_position_files = None
+    
     print("Done")
-    
-    
     
     meta_simu_name = "Session_"+str(_session_number)
     
     # =============================================================================
     # Meta Simulation Definition
     # =============================================================================
-        
+    
     MetaSimulation = MAS.MetaSimulation(meta_simu_name,
                                         path_output,
                                         names_input_raw,
@@ -101,18 +110,27 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
                                         _simulation_step=_Simulation_steps,
                                         _data_adjusted_position_files=data_adjusted_position_files)
     
-    MetaSimulation.Launch_Meta_Simu_NoLabels(
-                                _coerced_X = True,
-                                _coerced_Y = False,
-                                _extensive_Init = False,
-                                _new_end_crit = True,
-                                _analyse_and_remove_Rows = True,
-                                _rows_edges_exploration = True)
+    if (_labelled_images):
+        
+        MetaSimulation.Launch_Meta_Simu_Labels(
+                                    _coerced_X = True,
+                                    _coerced_Y = False,
+                                    _analyse_and_remove_Rows = True,
+                                    _rows_edges_exploration = True)
+    
+    else:
+    
+        MetaSimulation.Launch_Meta_Simu_NoLabels(
+                                    _coerced_X = True,
+                                    _coerced_Y = False,
+                                    _analyse_and_remove_Rows = True,
+                                    _rows_edges_exploration = True)
     
 if (__name__=="__main__"):
 
     All_Simulations(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
                     _path_PreTreatment_and_FA="../Tutorial/Output_General/Set1",
-                    _session_number=1,
+                    _labelled_images = True,
+                    _session_number=1, _growth_monitoring = False,_path_MAS_initialize = None,
                     _RAs_group_size=20, _RAs_group_steps=2, _Simulation_steps=50,
                     _RALs_fuse_factor=0.5, _RALs_fill_factor=1.5)
