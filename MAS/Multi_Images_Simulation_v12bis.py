@@ -108,12 +108,9 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
                                         _data_adjusted_position_files=data_adjusted_position_files)
     
     if (_labelled_images):
-        
         MetaSimulation.Launch_Meta_Simu_Labels(
                                     _coerced_X = True,
                                     _coerced_Y = False,
-                                    _extensive_Init = True,
-                                    _new_end_crit=True,
                                     _analyse_and_remove_Rows = True,
                                     _rows_edges_exploration = True)
     
@@ -122,8 +119,6 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
         MetaSimulation.Launch_Meta_Simu_NoLabels(
                                     _coerced_X = True,
                                     _coerced_Y = False,
-                                    _extensive_Init = True,
-                                    _new_end_crit=True,
                                     _analyse_and_remove_Rows = True,
                                     _rows_edges_exploration = True)
     
