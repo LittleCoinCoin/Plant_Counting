@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat May 23 11:55:31 2020
-
-@author: eliot
-
 goals:
     - Performs the pre-treatments on the images
     - Applies the Otsu Segmentation to transform and RGB image to an White and 

@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Mar 14 14:29:11 2021
-
-@author: eliot
-
-
 Writing a parser to reorganize the json output and RGB images of the Unity Perception
 package. 
 By default all captures of all fields and all growth stages are written in a

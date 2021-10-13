@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 26 15:55:35 2020
 
-@author: eliot
-"""
 import os
 
 os.chdir("../Pre_Treatments")
@@ -13,7 +9,7 @@ os.chdir("../Fourier")
 import FrequencyAnalysis as FA
 
 os.chdir("../MAS")
-import Multi_Images_Simulation_v12bis as MIS
+import Multi_Images_Simulation as MIS
 
 def CompleteProcess(_path_input_rgb_img, _path_output_root,
                     

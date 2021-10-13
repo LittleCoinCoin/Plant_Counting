@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct  5 09:37:36 2020
-
-@author: eliot
-
 goal:
     - Approximation of the position of the plants positions thanks to Fourier Analysis
 Method

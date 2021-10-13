@@ -1,40 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jun  9 11:11:12 2020
-
-@author: eliot
-
-v14 :
-    - goal to add a feature to destroy unwanted rows
-    - new "end of simulation criterion" --> we re-evaluate the InterYdist. If
-    there is no evolution in the number of RALs after it, we stop the simulation.
-
-v15 :
-    - Add the exploration behaviour to cover the edges of the rows and make up
-    for the bad predictions of the FT in this area. It is basically the extensive 
-    approach but only on hte edges.
-
-v16 :
-    - Extended fusing condition to the case where to RALs are into each others
-    scanning zones
-    - p value for Row analysis changed from 0.05 to 0.0001
-
-v17 :
-    -Implement a growing algorithm more efficient for the plant agents.
-    -Implement a way to measure the surface of the white surfaces inside the 
-    plant agent's scanning zone.
-
-v18 :
-    -new agent plant growing policy Square based. Every borders moves the same way
-    -cleaning MAS_Simulation_Class
-
-v19 :
-    - new agent plant growing policy. individual based. RAs can move independently
-
-v20 :
-    - adaptations to the new input format of the labelling files generated with
-    Unity Perception
-"""
 
 import os
 import matplotlib.pyplot as plt
@@ -62,7 +26,8 @@ def rotation_matrix(_theta):
 def rotate_coord(_p, _pivot, _R):
     """
     gives the rotated coordinates of the point _p relatively to the _pivot point
-    based on the rotation matrix _R.
+    based on the rotation matrix _R. If _int is set to True, then the coordinates
+    are integers.
     _p, _pivot and _R must be numpy arrays
     """
     _r_new_point = np.dot(_R, _p - _pivot) + _pivot
@@ -74,8 +39,6 @@ def rotate_coord(_p, _pivot, _R):
 # =============================================================================
 class ReactiveAgent(object):
     """
-    Agents pixels
-    
     _RAL_x (int):
         leader column index in the image array
     _RAL_y (int):
@@ -93,75 +56,41 @@ class ReactiveAgent(object):
                  _local_x, _local_y,
                  _img_array):
         
-        
-        self.Fixed = False
-        self.Set_Local_coords(_local_x, _local_y)
+                
+        self.local_x = _local_x
+        self.local_y = _local_y
         
         self.outside_frame = False
         
         self.img_array = _img_array
         
-        self.decision = False
-        
         self.Move_Based_On_RAL(_RAL_x, _RAL_y)
         
+        self.decision = False
     
     def Otsu_decision(self):
         """
-        Returns True if the pixel where the RA is present is white
+        Sets self.decision to True if the pixel where the RA is present is white.
+        Sets to False otherwise.
         """
-        self.Is_Inside_Image_Frame()
-        
-        if (self.outside_frame):
-            self.decision = False
+        if (self.img_array[self.global_y, self.global_x][0] > 220):
+            self.decision = True
         else:
-            self.decision = self.img_array[self.global_y, self.global_x][0] > 220
-        
-        return self.decision
-    
-    def Set_Local_coords(self, _x, _y):
-        """
-        Sets local_x and local_y
-        """
-        if (not self.Fixed):
-            self.local_x = _x
-            self.local_y = _y
-    
-    def Set_Global_Coord(self, _x, _y):
-        """
-        Sets global_x and global_y
-        """
-        if (not self.Fixed):
-            self.global_x = _x
-            self.global_y = _y
-    
-    def Update_Global_coords(self, _RAL_x, _RAL_y):
-        """
-        Update global position based on local and RAL positions
-        """
-        self.Set_Global_Coord(_RAL_x + self.local_x, _RAL_y + self.local_y)
-    
-    def Update_All_coords(self, _dir_x, _dir_y):
-        """
-        Update both local and global coordinates by applying the modificators
-        _dir_x and _dir_y.
-        _dir_x and _dir_y are the coordinates of the new point relatively to
-        the current coordinates.
-        """
-        self.Set_Local_coords(self.local_x + _dir_x, self.local_y +_dir_y)
-        self.Set_Global_Coord(self.global_x + _dir_x, self.global_y + _dir_y)
+            self.decision = False
+            
     
     def Move_Based_On_RAL(self, _RAL_x, _RAL_y):
         """
-        Update the position of the RAL based on the order given by the AD (agent
-        director).
-        _ADO_x (int):
-            X coordinate of the target point (column of the image array)
+        Update the position of the RA based on the position of its RAL (Reactive
+        Agent Leader).
+        _RAL_x (int):
+            X coordinate of the RAL (column of the image array)
         
-        _ADO_y (int):
-            Y coordinate of the target point (line of the image array)
+        _RAL_y (int):
+            Y coordinate of the RAL (line of the image array)
         """
-        self.Update_Global_coords(_RAL_x, _RAL_y)
+        self.global_x = _RAL_x + self.local_x
+        self.global_y = _RAL_y + self.local_y
         
         self.Is_Inside_Image_Frame()
         
@@ -176,62 +105,10 @@ class ReactiveAgent(object):
             
         else:
             self.outside_frame = False
-    
-    def Explore_Pixel(self, _x, _y):
-        """
-        Returns True is the pixel is white.
-        Returns False if the pixel is black or outside of the image frame
-        """
-        
-        _activity = False
-        if (0<= _y <self.img_array.shape[0] and
-            0<= _x <self.img_array.shape[1]):
-            
-            if (self.img_array[_y, _x][0] > 220):
-                _activity = True
-                
-        return _activity
-    
-    def Exploration_Report(self, _x_dir, _y_dir,
-                           _exploration_factor, _shrinking_factor):
-        """
-        (_x_dir, _y_dir) gives the direction of exploration
-        """
-        
-        _exploration_score = 0
-        if (not self.outside_frame):
-            for _inc in range (1, _exploration_factor+1):
-                x_dir_global = self.global_x + _inc * _x_dir
-                y_dir_global = self.global_y + _inc * _y_dir
-            
-                if (0<= y_dir_global < self.img_array.shape[0] and
-                    0<= x_dir_global < self.img_array.shape[1]):
-                    
-                    if (self.img_array[y_dir_global, x_dir_global][0] > 220):
-                        _exploration_score += 1
-                        
-        _score = 0
-        if (_exploration_score > 0):
-            _score = _exploration_score
-        elif _exploration_score == 0:
-            _shrinking_score = 0
-            for _inc in range (-_shrinking_factor, 0):
-                x_dir_global = self.global_x + _inc * _x_dir
-                y_dir_global = self.global_y + _inc * _y_dir
-            
-                if (0<= y_dir_global < self.img_array.shape[0] and
-                    0<= x_dir_global < self.img_array.shape[1]):
-                    
-                    if (self.img_array[y_dir_global, x_dir_global][0] < 220):
-                        _shrinking_score += 1
-            _score = -_shrinking_score
-        
-        return _score
+
 
 class ReactiveAgent_Leader(object):
     """
-    Agent Plante
-    
     _x (int):
         column index in the image array
     _y (int):
@@ -260,16 +137,14 @@ class ReactiveAgent_Leader(object):
         self.x = int(_x)
         self.y = int(_y)
         self.img_array = _img_array
+        
         self.group_size = _group_size
         self.group_step = _group_step
         self.correct_RAL_position()
-        self.nb_RAs = 0
-        self.nb_RAs_card = [0,0,0,0]
-        
-        self.nb_contiguous_white_pixel = 0
-        self.white_contigous_surface = 0
         
         self.field_offset = _field_offset
+        
+        self.decision = False
         
         self.active_RA_Point = np.array([self.x, self.y])
         self.movement_vector = np.zeros(2)
@@ -284,22 +159,8 @@ class ReactiveAgent_Leader(object):
 #         print("Done")
 #         print("Initializing the Reactive Agents under the RAL supervision...", end = " ")
 # =============================================================================
-        self.Borders_Distance = [self.group_size,
-                                 -self.group_size,
-                                 self.group_size,
-                                 -self.group_size]
-        self.Fixed = False
-        self.nb_RAs_Fixed = 0
-        self.With_Neighbour_Overlap = [False, False, False, False]
-        self.exploration_factor = 4
-        self.shrinking_factor = 2
-        self.area_CS = 0
-        self.area_CS2 = 0
-        self.area_CS3 = 0
-        self.RAs_local_positions = []
         
         self.RAs_square_init()
-        #self.RAs_border_init()
         
         self.Get_RAs_Otsu_Prop()
         self.recorded_Decision_Score = [self.decision_score]
@@ -351,97 +212,23 @@ class ReactiveAgent_Leader(object):
         nb_outside_frame_RAs = 0
         for _RA in self.RA_list:
             if not _RA.outside_frame:
-                if (_RA.Otsu_decision()):
+                _RA.Otsu_decision()
+                if (_RA.decision):
                     nb_true_votes+=1
             else:
                 nb_outside_frame_RAs += 1
         
         self.decision_score = nb_true_votes/(self.nb_RAs-nb_outside_frame_RAs)
     
-    def Add_One_Line_of_RAs(self, _x0, _y0, _xy1, _horizontal):
+    def Get_RAL_Otsu_Decision(self, _threshold = 0.5):
         """
-        instanciates RAs on a line
-        
-        _x0 and _yo are the coordinates of the beginning point
-        
-        _xy1 is the coordinate of the last point. it should an x if _horizontal
-        is true and a y, otherwise
-        
-        _horizontal (bool) if True the line is horizaontal. It is vertical, otherwise.
+        Gathering the information from the RAs based on their Otsu decision
         """
+        self.Get_RAs_Otsu_Prop()
         
-        if (_horizontal):
-            return [ReactiveAgent(
-                    self.x, self.y,
-                    i, _y0, self.img_array) for i in range(_x0,
-                                                           _xy1+self.group_step,
-                                                           self.group_step)]
-        else:
-            return [ReactiveAgent(
-                    self.x, self.y,
-                    _x0, i, self.img_array) for i in range(_y0,
-                                                           _xy1+self.group_step,
-                                                           self.group_step)]
-    
-    def Add_One_Layer_of_RAs(self, _distance_list):
-        """
-        Add one complete laryer of RAs. The layer is square shaped and initialized
-        based on _distance_list.
-        
-        _distance_list is a list of size 4 with distances of the layer respectively
-        the center of the RAL. in the order of North, South, East, West.
-        """
-        
-        _layer = []
-        
-        #Adding North part
-        _layer += [self.Add_One_Line_of_RAs(_distance_list[3],#_x0 is the distance to the west
-                                            _distance_list[0],#_y0 is the distance to the North
-                                            _distance_list[2],#_xy1 is the distance to the East
-                                            _horizontal=True)]
-        
-        #Adding South part
-        _layer += [self.Add_One_Line_of_RAs(_distance_list[3],#_x0 is the distance to the west
-                                            _distance_list[1],#_y0 is the distance to the South
-                                            _distance_list[2],#_xy1 is the distance to the East
-                                            _horizontal=True)]
-        
-        #Adding East part
-        _layer += [self.Add_One_Line_of_RAs(_distance_list[2],#_x0 is the distance to the East
-                                            _distance_list[1],#_y0 is the distance to the South
-                                            _distance_list[0],#_xy1 is the distance to the North
-                                            _horizontal=False)]
-        
-        #Adding West part
-        _layer += [self.Add_One_Line_of_RAs(_distance_list[3],#_x0 is the distance to the West
-                                            _distance_list[1],#_y0 is the distance to the South
-                                            _distance_list[0],#_xy1 is the distance to the North
-                                            _horizontal=False)]
-        return _layer
-    
-    def Flatten_Layer(self, _list):
-        """
-        returns the list of the RAS with out the lists separations of the North,
-        South, East and West borders.
-        """
-        return _list[0]+_list[1]+_list[2]+_list[3]
-    
-    def RAs_border_init(self):
-        """
-        Instanciation strategy on the border of the group size.
-        Added to accomodate the new growing strategy of the RAL
-        """
-        
-        _grp_s= int(0.3*self.group_size)
-        self.RA_list_card = self.Add_One_Layer_of_RAs([_grp_s,-_grp_s,
-                                                       _grp_s,-_grp_s])
-                
-        self.RA_list = self.Flatten_Layer(self.RA_list_card)
-        
-        for i in range (4):
-            self.nb_RAs_card[i] = len(self.RA_list_card[i])
-            self.nb_RAs += self.nb_RAs_card[i]
-    
+        if (self.decision_score > _threshold):
+            self.decision = True
+
     def Get_RAs_Mean_Point(self):
         """
         compute the mean point of the RAs that gave a positive answer to the 
@@ -454,33 +241,20 @@ class ReactiveAgent_Leader(object):
         nb_outside_frame_RAs = 0
         for _RA in self.RA_list:
             if not _RA.outside_frame:
-                if (_RA.Otsu_decision()):
+                _RA.Otsu_decision()
+                if (_RA.decision):
                     mean_x += _RA.global_x
                     mean_y += _RA.global_y
                     active_RA_counter += 1
             else:
                 nb_outside_frame_RAs += 1
-                
+        
         self.recorded_Decision_Score += [active_RA_counter/(self.nb_RAs-nb_outside_frame_RAs)]
         
         if (active_RA_counter != 0):
             self.active_RA_Point[0] = mean_x/active_RA_counter
-            self.active_RA_Point[1] = mean_y/active_RA_counter
-    
-    def Get_RAs_Mean_Point_3(self):
-        """
-        Scans the inner part of the RAL. We use the RAs on the North border and
-        move down.
-        """
-        mean_x = 0
-        mean_y = 0
-        
-        for _RA in self.RA_list:
-            mean_x += _RA.global_x
-            mean_y += _RA.global_y
+            self.active_RA_Point[1] = mean_y/active_RA_counter  
             
-        self.active_RA_Point[0] = mean_x/self.nb_RAs
-        self.active_RA_Point[1] = mean_y/self.nb_RAs
     
     def Move_Based_on_AD_Order(self, _ADO_x, _ADO_y):
         """
@@ -501,682 +275,9 @@ class ReactiveAgent_Leader(object):
         
         for _RA in self.RA_list:
             _RA.Move_Based_On_RAL(self.x, self.y)
-    
-    def Manage_RAs_distribution(self):
-        """
-        Moves the RAs individually
-        """
-        if (not self.Fixed):
-            self.All_Border_Movement()
-            
-            self.All_Border_Growth()
-            
-            for i in range (4):
-                self.Check_Border_Distance(i)
-            
-            self.Is_Fixed()
-            
-            self.RA_list = self.Flatten_Layer(self.RA_list_card)
-            
-            self.nb_RAs = sum(self.nb_RAs_card)
-        
-        
-    def All_Border_Movement(self):
-        """
-        Individual movements or RAs for all 4 borders
-        """
-        
-# =============================================================================
-#         print("All_Border_Movement")
-# =============================================================================
-        self.all_end_score = []
-        
-        #North
-# =============================================================================
-#         print("North")
-# =============================================================================
-        self.Border_movement(0, 0, 1)
-        
-        #South
-# =============================================================================
-#         print("South")
-# =============================================================================
-        self.Border_movement(1, 0, -1)
-        
-        #East
-# =============================================================================
-#         print("East")
-# =============================================================================
-        self.Border_movement(2, 1, 0)
-        
-        #West
-# =============================================================================
-#         print("West")
-# =============================================================================
-        self.Border_movement(3, -1, 0)
-    
-    def Border_movement(self, _border_index, _x_dir, _y_dir):
-        
-        nb_RAs_in_Border = len(self.RA_list_card[_border_index])
-        _border_scores = self.Individual_Movement_Scores(_border_index, _x_dir, _y_dir, nb_RAs_in_Border)
-        
-        self.Comparison_To_Fixed_Points(_border_index, _x_dir, _y_dir, _border_scores)
-        
-        _propagated_score = self.Propagated_Movement_Scores(_border_scores, nb_RAs_in_Border)
-        
-        end_score = _border_scores + _propagated_score
-        self.all_end_score += [end_score]
-        
-        for i in range (nb_RAs_in_Border):
-            if (_border_scores[i] == 0 and _propagated_score[i] == 0):
-                self.RA_list_card[_border_index][i].Fixed = True
-                self.nb_RAs_Fixed += 1
-            
-            else:
-                self.Check_And_Apply_Movement(_border_index, _x_dir, _y_dir, i, end_score)
-            
-        
-# =============================================================================
-#         print("_border_scores", _border_scores)
-#         print("_propagated_score", _propagated_score)
-#         print("_sum_scores", end_score)
-# =============================================================================
-    def Check_Border_Distance(self, _border_index):#, _farthest_RAs):
-        """
-        Keeps track of the RAs (one per border) of each RAL that are the
-        farthest away in its exploration.
-        """
-        #_res = _farthest_RAs
-        
-        if (_border_index == 0):#North
-            _y_list = []
-            for _RA in self.RA_list_card[_border_index]:
-                _y_list += [_RA.local_y]
-            self.Borders_Distance[0] = max(_y_list)
-                
-        if (_border_index == 1):#South
-            _y_list = []
-            for _RA in self.RA_list_card[_border_index]:
-                _y_list += [_RA.local_y]
-            self.Borders_Distance[1] = min(_y_list)
-        
-        if (_border_index == 2):#East
-            _x_list = []
-            for _RA in self.RA_list_card[_border_index]:
-                _x_list += [_RA.local_x]
-            self.Borders_Distance[2] = max(_x_list)
-                
-        if (_border_index == 3):#West
-            _x_list = []
-            for _RA in self.RA_list_card[_border_index]:
-                _x_list += [_RA.local_x]
-            self.Borders_Distance[3] = min(_x_list)
 
-    def Individual_Movement_Scores(self, _border_index, _x_dir, _y_dir, _nb_RAs):
-        
-        _border_scores = np.zeros(_nb_RAs, dtype=np.int_)
-        
-        for i in range (_nb_RAs):
-            _border_scores[i] = self.RA_list_card[_border_index][i].Exploration_Report(_x_dir, _y_dir,
-                                                                                      self.exploration_factor,
-                                                                                      self.shrinking_factor)
-        return _border_scores
-    
-    def Propagated_Movement_Scores(self, _border_scores, _nb_RAs):
-        """
-        We only propagate the exploration score
-        """
-        
-        _propagation_score = np.zeros(_nb_RAs, dtype = np.int_)
-        for i in range (_nb_RAs):
-            _score = _border_scores[i]
-            _reach = abs(_score)
-            
-            for j in range (1, _reach):
-                k = i+j
-                if 0 <= k < _nb_RAs:
-                    if _score > 0:
-                        _propagation_score[k] += _score - j
-                        
-                k = i-j
-                if 0 <= k < _nb_RAs:
-                    if _score > 0:
-                        _propagation_score[k] += _score - j
-                        
-        return _propagation_score
-    
-    def Check_And_Apply_Movement(self, _border_index, _x_dir, _y_dir, _RA_index, _score):
-        """
-        Directly applies the movement score only if border overlap has not been
-        detected with a neighbour.
-        otherwise, it applies a correction to the score so that the pixel
-        agent do not go beyond the other pixel agents that is the source of the
-        overlap.
-        
-        It also makes sure that a RA do not shrink beyond half the center
-        of the RAL
-        """
-        if (self.With_Neighbour_Overlap[_border_index]):
-            if (_border_index == 0):
-                if (self.RA_list_card[_border_index][_RA_index].local_y + _y_dir * _score[_RA_index] > self.Borders_Distance[_border_index]):
-                    _y_diff = self.RA_list_card[_border_index][_RA_index].local_y + _y_dir * _score[_RA_index] - self.Borders_Distance[_border_index]
-                    _score[_RA_index] -= _y_diff
-                    
-            if (_border_index == 1):
-
-                if (self.RA_list_card[_border_index][_RA_index].local_y + _y_dir * _score[_RA_index] < self.Borders_Distance[_border_index]):
-                    _y_diff = self.RA_list_card[_border_index][_RA_index].local_y + _y_dir * _score[_RA_index] - self.Borders_Distance[_border_index]
-                    _score[_RA_index] += _y_diff
-                    
-            if (_border_index == 2):
-                if (self.RA_list_card[_border_index][_RA_index].local_x + _x_dir * _score[_RA_index] > self.Borders_Distance[_border_index]):
-                    _x_diff = self.RA_list_card[_border_index][_RA_index].local_x + _x_dir * _score[_RA_index] - self.Borders_Distance[_border_index]
-                    _score[_RA_index] -= _x_diff
-                    
-            if (_border_index == 3):
-                if (self.RA_list_card[_border_index][_RA_index].local_x + _x_dir * _score[_RA_index] < self.Borders_Distance[_border_index]):
-                    _x_diff = self.RA_list_card[_border_index][_RA_index].local_x + _x_dir * _score[_RA_index] - self.Borders_Distance[_border_index]
-                    _score[_RA_index] += _x_diff
-        
-        if (_border_index == 0):
-            if (self.RA_list_card[_border_index][_RA_index].local_y + _y_dir * _score[_RA_index] <= 0):
-                print("North, beyond half correction")
-                _score[_RA_index] = 0
-                    
-        if (_border_index == 1):
-            if (self.RA_list_card[_border_index][_RA_index].local_y + _y_dir * _score[_RA_index] >= 0):
-                print("South, beyond half correction")
-                _score[_RA_index] = 0
-                
-        if (_border_index == 2):
-            if (self.RA_list_card[_border_index][_RA_index].local_x + _x_dir * _score[_RA_index] <= 0):
-                print("East, beyond half correction")
-                _score[_RA_index] = 0
-                
-        if (_border_index == 3):
-            if (self.RA_list_card[_border_index][_RA_index].local_x + _x_dir * _score[_RA_index] >= 0):
-                print("West, beyond half correction")
-                _score[_RA_index] = 0
-        
-        
-        self.RA_list_card[_border_index][_RA_index].Update_All_coords(_x_dir*_score[_RA_index],
-                                                                          _y_dir*_score[_RA_index])
-        
-    
-    def Comparison_To_Fixed_Points(self,
-                                   _border_index,
-                                   _x_dir, _y_dir,
-                                   _border_scores):
-        """
-        Fixed points are points that have found edges of the target structure.
-        We want to use them as references to guide the points that have not
-        found anything.
-        We will take the movement_scores and force a RA to move in the direction
-        of its neighbour if that one is fixed.
-        """
-# =============================================================================
-#         print("self.nb_RAs_card[_border_index]", self.nb_RAs_card[_border_index])
-# =============================================================================
-        for i in range (self.nb_RAs_card[_border_index]):#for every RA
-            if (self.RA_list_card[_border_index][i].Fixed or
-                self.RA_list_card[_border_index][i].Otsu_decision()):#if RA is fixed or on a white pixel
-                for k in [i-1, i+1]:#for left & right neighbours
-                    if (0<=k<self.nb_RAs_card[_border_index]):#if such neighbour exists
-                        if (_border_scores[k]==-self.shrinking_factor):#If the neighbour is not exploring
-                            if (_x_dir == 0 ):#border movement on the Y axis
-                                _y_dir_to_fixed = (self.RA_list_card[_border_index][i].global_y-
-                                                   self.RA_list_card[_border_index][k].global_y)
-                                
-                                if (_y_dir_to_fixed > 0):#the neighbour is going the opposite direction
-# =============================================================================
-#                                     print( k, _border_scores[k], _y_dir, _y_dir_to_fixed)
-# =============================================================================
-                                    _border_scores[k] = _y_dir*self.exploration_factor
-                                elif (_y_dir_to_fixed < 0):
-                                    _border_scores[k] = -_y_dir*self.exploration_factor
-                                
-                            elif(_y_dir == 0):#border movement on the Y axis
-                                _x_dir_to_fixed = (self.RA_list_card[_border_index][i].global_x-
-                                                        self.RA_list_card[_border_index][k].global_x)
-                                if (_x_dir_to_fixed > 0):#the neighbour is going the opposite direction
-# =============================================================================
-#                                     print( k, _border_scores[k], _x_dir, _x_dir_to_fixed)
-# =============================================================================
-                                    _border_scores[k] = _x_dir*self.exploration_factor
-                                
-                                elif(_x_dir_to_fixed < 0):
-                                    _border_scores[k] = -_x_dir*self.exploration_factor
-                                
-    
-    def All_Border_Growth(self):
-        """
-        Cutting or adding RAs at the extremeties of the borders based on their
-        movements computed beforehand (with All_Border_Movement)
-        """
-        #North - West
-        self.Border_Growth(0, 0, 3, -1)
-        
-        #North - East
-        self.Border_Growth(0, -1, 2, -1)
-        
-        #South - West
-        self.Border_Growth(1, 0, 3, 0)
-        
-        #South - East
-        self.Border_Growth(1, -1, 2, 0) 
-    
-    def Border_Growth(self,
-                      _border_index_1, _extreme_index_1,
-                      _border_index_2, _extreme_index_2,
-                      _limit_size_factor = 0.25):
-        
-        _limit_size = int(_limit_size_factor * self.group_size)        
-            
-        if (_border_index_1 == 0):
-            if (self.all_end_score[_border_index_1][_extreme_index_1] < 0 and
-                self.all_end_score[_border_index_2][_extreme_index_2] < 0):
-            
-                if (self.nb_RAs_card[_border_index_1] > _limit_size):
-                    if (_border_index_2 == 3): #we truncate from the West
-                        self.RA_list_card[_border_index_1] = self.RA_list_card[_border_index_1][1:]
-                    elif(_border_index_2 == 2): #we truncate fromt he East
-                        self.RA_list_card[_border_index_1] = self.RA_list_card[_border_index_1][:-1]
-                    self.nb_RAs_card[_border_index_1] -= 1
-                    
-                if (self.nb_RAs_card[_border_index_2] > _limit_size):
-                    self.RA_list_card[_border_index_2] = self.RA_list_card[_border_index_2][:-1]
-                    self.nb_RAs_card[_border_index_2] -= 1
-                    
-            else:
-                _y_RAs = []
-                _x_RAs = []
-                if self.all_end_score[_border_index_1][_extreme_index_1] > 0: #with North we add at the end of West and East
-                    _y_diff = abs(self.RA_list_card[_border_index_1][_extreme_index_1].local_y - \
-                                self.RA_list_card[_border_index_2][_extreme_index_2].local_y)
-                    _y_RAs = [ReactiveAgent(self.x, self.y,
-                                          self.RA_list_card[_border_index_2][_extreme_index_2].local_x,
-                                          self.RA_list_card[_border_index_1][_extreme_index_1].local_y - k,
-                                          self.img_array) for k in range(0, _y_diff, self.group_step)][::-1]
-                    
-                    self.nb_RAs_card[_border_index_2] += len(_y_RAs)
-                    
-                if self.all_end_score[_border_index_2][_extreme_index_2] > 0:
-                    
-                    _x_diff = abs(self.RA_list_card[_border_index_1][_extreme_index_1].local_x - \
-                                    self.RA_list_card[_border_index_2][_extreme_index_2].local_x)
-                    
-                    if (_border_index_2 == 3): #with West we add at the beginning of North
-                        _x_RAs = [ReactiveAgent(self.x, self.y,
-                                              self.RA_list_card[_border_index_2][_extreme_index_2].local_x + k,
-                                              self.RA_list_card[_border_index_1][_extreme_index_1].local_y,
-                                              self.img_array) for k in range(0, _x_diff, self.group_step)]
-            
-                        self.RA_list_card[_border_index_1] = _x_RAs + self.RA_list_card[_border_index_1]
-                        
-                                              
-                    elif (_border_index_2 == 2): #with East we add at the end of North
-                        _x_RAs = [ReactiveAgent(self.x, self.y,
-                                              self.RA_list_card[_border_index_2][_extreme_index_2].local_x - k,
-                                              self.RA_list_card[_border_index_1][_extreme_index_1].local_y,
-                                              self.img_array) for k in range(0, _x_diff, self.group_step)][::-1]
-            
-                        self.RA_list_card[_border_index_1] += _x_RAs     
-                        
-                    self.nb_RAs_card[_border_index_1] += len(_x_RAs)
-                
-                self.RA_list_card[_border_index_2] += _y_RAs
-        
-        
-        if (_border_index_1 == 1):
-            if (self.all_end_score[_border_index_1][_extreme_index_1] < 0 and
-                self.all_end_score[_border_index_2][_extreme_index_2] < 0):
-            
-                if (self.nb_RAs_card[_border_index_1] > _limit_size):
-                    if (_border_index_2 == 3): #we truncate from the West
-                        self.RA_list_card[_border_index_1] = self.RA_list_card[_border_index_1][1:]
-                    elif(_border_index_2 == 2): #we truncate fromt he East
-                        self.RA_list_card[_border_index_1] = self.RA_list_card[_border_index_1][:-1]
-                    self.nb_RAs_card[_border_index_1] -= 1
-                    
-                if (self.nb_RAs_card[_border_index_2] > _limit_size):
-                    self.RA_list_card[_border_index_2] = self.RA_list_card[_border_index_2][1:]
-                    self.nb_RAs_card[_border_index_2] -= 1
-                    
-            else:
-                _y_RAs = []
-                _x_RAs = []
-                if self.all_end_score[_border_index_1][_extreme_index_1] > 0: #with North we add at the end of West and East
-                    _y_diff = abs(self.RA_list_card[_border_index_1][_extreme_index_1].local_y - \
-                                self.RA_list_card[_border_index_2][_extreme_index_2].local_y)
-                    _y_RAs = [ReactiveAgent(self.x, self.y,
-                                          self.RA_list_card[_border_index_2][_extreme_index_2].local_x,
-                                          self.RA_list_card[_border_index_1][_extreme_index_1].local_y + k,
-                                          self.img_array) for k in range(0, _y_diff, self.group_step)]
-                    
-                    self.nb_RAs_card[_border_index_2] += len(_y_RAs)
-                
-                if self.all_end_score[_border_index_2][_extreme_index_2] > 0:
-                    
-                    _x_diff = abs(self.RA_list_card[_border_index_1][_extreme_index_1].local_x - \
-                                    self.RA_list_card[_border_index_2][_extreme_index_2].local_x)
-                                        
-                    if (_border_index_2 == 3): #with West we add at the beginning of South
-                        _x_RAs = [ReactiveAgent(self.x, self.y,
-                                              self.RA_list_card[_border_index_2][_extreme_index_2].local_x + k,
-                                              self.RA_list_card[_border_index_1][_extreme_index_1].local_y,
-                                              self.img_array) for k in range(0, _x_diff, self.group_step)]
-            
-                        self.RA_list_card[_border_index_1] = _x_RAs + self.RA_list_card[_border_index_1]
-                        
-                                              
-                    elif (_border_index_2 == 2): #with East we add at the end of South
-                        _x_RAs = [ReactiveAgent(self.x, self.y,
-                                              self.RA_list_card[_border_index_2][_extreme_index_2].local_x - k,
-                                              self.RA_list_card[_border_index_1][_extreme_index_1].local_y,
-                                              self.img_array) for k in range(0, _x_diff, self.group_step)][::-1]
-            
-                        self.RA_list_card[_border_index_1] += _x_RAs     
-                        
-                    self.nb_RAs_card[_border_index_1] += len(_x_RAs)
-                
-                self.RA_list_card[_border_index_2] = _y_RAs + self.RA_list_card[_border_index_2]
-        
-    def Is_Fixed(self):
-        if (self.nb_RAs_Fixed/self.nb_RAs > 0.9):
-            self.Fixed = True
-    
-    def Extract_RAs_Locals(self):
-        """
-        Stores the x and y coordinates of the RAs per borders
-        """
-        self.RAs_local_positions = []
-        
-        for _border_index in range (4):
-            RAs_local_coords = []
-            for _RA in self.RA_list_card[_border_index]:
-                RAs_local_coords += [(int(_RA.local_x), int(_RA.local_y))]
-            self.RAs_local_positions += [RAs_local_coords]
-    
-    def Compute_Surface(self):
-        """
-        Computes area of the polygon defined by the closing curve built by the
-        RAs
-        """
-        self.Extract_RAs_Locals()
-        
-        total = self.RAs_local_positions[0]+self.RAs_local_positions[2][::-1]+\
-                self.RAs_local_positions[1][::-1]+self.RAs_local_positions[3]
-        
-        self.area_CS = 0
-        for i in range (self.nb_RAs-1):
-            self.area_CS += 0.5*(total[i+1][1]+total[i][1])*(total[i+1][0]-total[i][0])
-        
-        self.area_CS += 0.5*(total[1][1]+total[-1][1])*(total[0][0]-total[-1][0])
-    
-    def Initialize_Surface_Explorers(self, _border_index):
-        """
-        """
-        explorers = []
-        nb_explorers = 0
-        if (_border_index == 0):
-            for _RA in self.RA_list_card[0][1:-1]:
-                for k in range (self.group_step,
-                                self.Borders_Distance[0]-self.Borders_Distance[1],
-                                self.group_step):
-                    explorers += [(_RA.global_x, _RA.global_y - k)]
-                    nb_explorers += 1
-        
-        if (_border_index == 1):
-            for _RA in self.RA_list_card[1][1:-1]:
-                for k in range (self.group_step,
-                                self.Borders_Distance[0]-self.Borders_Distance[1],
-                                self.group_step):
-                    explorers += [(_RA.global_x, _RA.global_y + k)]
-                    nb_explorers += 1
-        
-        if (_border_index == 2):
-            for _RA in self.RA_list_card[2][1:-1]:
-                for k in range (self.group_step,
-                                self.Borders_Distance[2]-self.Borders_Distance[3],
-                                self.group_step):
-                    explorers += [(_RA.global_x - k, _RA.global_y)]
-                    nb_explorers += 1
-        
-        if (_border_index == 3):
-            for _RA in self.RA_list_card[3][1:-1]:
-                for k in range (self.group_step,
-                                self.Borders_Distance[2]-self.Borders_Distance[3],
-                                self.group_step):
-                    explorers += [(_RA.global_x + k, _RA.global_y)]
-                    nb_explorers += 1
-        
-        return explorers, nb_explorers
-    
-    def Compute_Surface_3(self):
-        """
-        Computes the area as a number of white pixels defined in the rectangle
-        formed by the borders extremums
-        """
-        self.area_CS3 = 0 #reset
-        self.Extract_RAs_Locals()
-        
-        #print("self.group_size", self.group_size)
-        square_height = self.Borders_Distance[0]-self.Borders_Distance[1]
-        square_width = self.Borders_Distance[2]-self.Borders_Distance[3]
-        
-# =============================================================================
-#         search_space_array = np.zeros((square_height+1,
-#                                        square_width+1))
-# =============================================================================
-        
-        anchor_x = self.x + self.Borders_Distance[3]
-        anchor_y = self.y + self.Borders_Distance[1]
-        
-        for _r in range(square_height+1):
-            for _c in range(square_width+1):
-                
-                _x = anchor_x + _c
-                _y = anchor_y + _r
-                
-                if (0<=_y<self.img_array.shape[0] and 0<=_x<self.img_array.shape[1]):
-                    if self.img_array[_y][_x][0] > 220:
-                        self.area_CS3 += 1
-                        
-# =============================================================================
-#                         search_space_array[_r][_c] = 1
-# =============================================================================
-                        
-# =============================================================================
-#         fig = plt.figure(figsize=(5,5),dpi=300)
-#         ax = fig.add_subplot(111)
-#         ax.imshow(search_space_array)
-# =============================================================================
-        
-    
-    def Compute_Surface_2(self):
-        """
-        Computes the area as a number of white pixels within the polygone defined 
-        by the RAs.
-        """
-        self.Extract_RAs_Locals()
-        
-        self.area_CS2 = 0 #reset
-        
-        #print("self.group_size", self.group_size)
-        square_height = self.Borders_Distance[0]-self.Borders_Distance[1]
-        square_width = self.Borders_Distance[2]-self.Borders_Distance[3]
-        
-# =============================================================================
-#         print(self.Borders_Distance,
-#               "height:", square_height, "width:", square_width,
-#               "x:", self.x, "y:", self.y)
-# =============================================================================
-        
-        surface_print=np.zeros((square_height,square_width))
-        
-        directions = [(0,1), (0,-1), (1,0), (-1,0)] #(x, y)
-        
-        explorers = []
-        nb_explorers = 0
-        
-        explorers, nb_explorers = self.Initialize_Surface_Explorers(np.argmax(self.nb_RAs_card))
-        
-        anchor_x = self.x+self.Borders_Distance[3]
-        anchor_y = self.y+self.Borders_Distance[1]
-        
-        while nb_explorers > 0:
-            
-            print_row = explorers[0][1]-anchor_y#row coord in surface print array
-            print_col = explorers[0][0]-anchor_x#column coord in surface print array
-            
-            image_row = explorers[0][1]#row coord in image array
-            image_col = explorers[0][0]#col coord in image array
-            
-            inside_double_check = (self.Is_Inside_Polygon((anchor_x-1, anchor_y),(image_col, image_row)) or
-                                   self.Is_Inside_Polygon((anchor_x, anchor_y-1),(image_col, image_row)))
-            
-            if (inside_double_check and
-                0 <= image_row < self.img_array.shape[0] and 
-                0 <= image_col < self.img_array.shape[1] and
-                0 <= print_row < surface_print.shape[0] and 
-                0 <= print_col < surface_print.shape[1]):
-                if (self.img_array[image_row][image_col][0] > 220):#if the pixel is white
-                    surface_print[print_row][print_col]=2
-                    self.area_CS2 +=1
-                    
-                    for _d in directions:
-                        if (0 <= print_row + _d[1] < square_height and
-                            0 <= print_col + _d[0] < square_width):#if in the bounds of the surface_print array size
-                            if (surface_print[print_row + _d[1]][print_col + _d[0]] == 0):#if the pixel has not an explorer already
-                                
-                                surface_print[print_row+_d[1]][print_col+_d[0]]=1#we indicate that we have added the coords to the explorers
-                                
-                                new_explorer_x = image_col + _d[0]
-                                new_explorer_y = image_row + _d[1]
-                                explorers += [(new_explorer_x, 
-                                               new_explorer_y)]
-                                nb_explorers += 1
-            
-            explorers = explorers[1:]
-            nb_explorers -= 1
-        
-# =============================================================================
-#         print(surface_print)
-#         print("nb_white_pixels", self.nb_contiguous_white_pixel)
-#         print("surface_white_pixels", self.white_contigous_surface)
-# =============================================================================
-# =============================================================================
-#         fig = plt.figure(figsize=(5,5),dpi=300)
-#         ax = fig.add_subplot(111)
-#         ax.imshow(surface_print)
-#         print("nb_white_pixels", self.area)
-# =============================================================================
-    
-    def Is_Inside_Polygon(self, _origin, _test_point):
-        """
-        Uses the raycasting method to check if the point is inside the polygon
-        """
-        inside = False
-        total = self.RA_list_card[0]+self.RA_list_card[2][::-1]+\
-                self.RA_list_card[1][::-1]+self.RA_list_card[3]
-        for i in range (self.nb_RAs-1):
-            if (self.Vector_Intersection(_origin[0], _origin[1],
-                                         _test_point[0], _test_point[1],
-                                         total[i].global_x, total[i].global_y,
-                                         total[i+1].global_x, total[i+1].global_y)):
-                inside = not inside
-        
-        if (self.Vector_Intersection(_origin[0], _origin[1],
-                                         _test_point[0], _test_point[1],
-                                         total[0].global_x, total[0].global_y,
-                                         total[-1].global_x, total[-1].global_y)):
-                inside = not inside
-        return inside
-
-    def Vector_Intersection(self,
-                            v1x1, v1y1,
-                            v1x2, v1y2,
-                            v2x1, v2y1,
-                            v2x2, v2y2):
-        """
-        Returns True is 2 vector intersects.
-        This method helps computing if the raycasting crosses a bound
-        
-        taken_from: https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
-        """
-        crossed = True
-# =============================================================================
-#     Convert vector 1 to a line (line 1) of infinite length.
-#      We want the line in linear equation standard form: A*x + B*y + C = 0
-#     See: http://en.wikipedia.org/wiki/Linear_equation
-# =============================================================================
-        a1 = v1y2 - v1y1;
-        b1 = v1x1 - v1x2;
-        c1 = (v1x2 * v1y1) - (v1x1 * v1y2);
-
-# =============================================================================
-#     Every point (x,y), that solves the equation above, is on the line,
-#     every point that does not solve it, is not. The equation will have a
-#     positive result if it is on one side of the line and a negative one 
-#     if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
-#     2 into the equation above.
-# =============================================================================
-        d1 = (a1 * v2x1) + (b1 * v2y1) + c1;
-        d2 = (a1 * v2x2) + (b1 * v2y2) + c1;
-
-# =============================================================================
-#     If d1 and d2 both have the same sign, they are both on the same side
-#     of our line 1 and in that case no intersection is possible. Careful, 
-#     0 is a special case, that's why we don't test ">=" and "<=", 
-#     but "<" and ">".
-# =============================================================================
-        if (d1 > 0 and d2 > 0) or (d1 < 0 and d2 < 0):
-            crossed = False
-
-# =============================================================================
-#     The fact that vector 2 intersected the infinite line 1 above doesn't 
-#     mean it also intersects the vector 1. Vector 1 is only a subset of that
-#     infinite line 1, so it may have intersected that line before the vector
-#     started or after it ended. To know for sure, we have to repeat the
-#     the same test the other way round. We start by calculating the 
-#     infinite line 2 in linear equation standard form.
-# =============================================================================
-        a2 = v2y2 - v2y1;
-        b2 = v2x1 - v2x2;
-        c2 = (v2x2 * v2y1) - (v2x1 * v2y2);
-
-# =============================================================================
-#   Calculate d1 and d2 again, this time using points of vector 1.
-# =============================================================================
-        d1 = (a2 * v1x1) + (b2 * v1y1) + c2;
-        d2 = (a2 * v1x2) + (b2 * v1y2) + c2;
-
-# =============================================================================
-#     Again, if both have the same sign (and neither one is 0),
-#     no intersection is possible.
-# =============================================================================
-        if (d1 > 0 and d2 > 0) or (d1 < 0 and d2 < 0):
-            crossed = False
-
-# =============================================================================
-#     If we get here, only two possibilities are left. Either the two
-#     vectors intersect in exactly one point or they are collinear, which
-#     means they intersect in any number of points from zero to infinite.
-# =============================================================================
-# =============================================================================
-#         if ((a1 * b2) - (a2 * b1) == 0):
-#             crossed = True
-# =============================================================================
-
-# =============================================================================
-#     If they are not collinear, they must intersect in exactly one point.
-# =============================================================================
-        return crossed;
-    
 class Row_Agent(object):
     """
-    Agent rang de culture
-    
     _plant_FT_pred_per_crop_rows (list of lists extracted for a JSON file):
         array containing the predicted position of plants organized by rows.
         The lists corresponding to rows contain other lists of length 2 giving 
@@ -1217,12 +318,8 @@ class Row_Agent(object):
         self.field_offset = _field_offset
         
         self.RALs = []
-        self.nb_RALs = 0
-        self.nb_Fixed_RALs = 0
         
         self.extensive_init = False
-        
-        
         
 # =============================================================================
 #         print("Done")
@@ -1237,6 +334,7 @@ class Row_Agent(object):
         """
         Go through the predicted coordinates of the plants in self.plant_FT_pred_par_crop_rows
         and initialize RALs at these places.
+        
         """
 # =============================================================================
 #         print()
@@ -1244,15 +342,59 @@ class Row_Agent(object):
         
         for _plant_pred in self.plant_FT_pred_in_crop_row:
             RAL = ReactiveAgent_Leader(_x = _plant_pred[0],
-                                       _y = _plant_pred[1], #self.OTSU_img_array.shape[0] - 
+                                       _y = self.OTSU_img_array.shape[0] - _plant_pred[1],
                                        _img_array = self.OTSU_img_array,
                                        _group_size = self.group_size,
                                        _group_step = self.group_step,
                                        _field_offset = self.field_offset)
             
             self.RALs += [RAL]
-            self.nb_RALs += 1
         
+    def Extensive_Init(self, _filling_step):
+        """
+        Uses the first RAL in the self.RALs list to extensively instanciate
+        RALs between the bottom and the top of the image.
+        """        
+        self.extensive_init = True
+        
+        _RAL_ref_index = 0
+        _RAL_ref = self.RALs[_RAL_ref_index]
+        
+        y_init = _RAL_ref.y
+        while y_init + _filling_step < self.OTSU_img_array.shape[0]:
+            new_RAL = ReactiveAgent_Leader(_x = self.Row_Mean_X,
+                                           _y = int(y_init + _filling_step),
+                                           _img_array = self.OTSU_img_array,
+                                           _group_size = self.group_size,
+                                           _group_step = self.group_step,
+                                           _field_offset = self.field_offset)
+            new_RAL.used_as_filling_bound = False
+            y_init += _filling_step
+            
+            self.RALs += [new_RAL]
+                
+        
+        y_init = _RAL_ref.y
+        new_RALs = []
+        new_diffs = []
+        while y_init - _filling_step > 0:
+            new_RAL = ReactiveAgent_Leader(_x = self.Row_Mean_X,
+                                           _y = int(y_init + _filling_step),
+                                           _img_array = self.OTSU_img_array,
+                                           _group_size = self.group_size,
+                                           _group_step = self.group_step)
+            new_RAL.used_as_filling_bound = False
+            
+            new_RALs += [new_RAL]
+            new_diffs += [_filling_step]
+            
+            y_init -= _filling_step
+        
+        self.RALs = new_RALs + self.RALs
+        
+        a = np.array([RAL.y for RAL in self.RALs])
+        b = np.argsort(a)
+        self.RALs = list(np.array(self.RALs)[b])
     
     def Edge_Exploration(self, _filling_step):
         """
@@ -1275,7 +417,6 @@ class Row_Agent(object):
             y_init += _filling_step
             
             self.RALs += [new_RAL]
-            self.nb_RALs += 1
                 
         _RAL_ref_index = 0
         _RAL_ref = self.RALs[_RAL_ref_index]
@@ -1291,7 +432,6 @@ class Row_Agent(object):
             new_RAL.used_as_filling_bound = True
             
             new_RALs += [new_RAL]
-            self.nb_RALs +=1
             new_diffs += [_filling_step]
             
             y_init -= _filling_step
@@ -1305,7 +445,7 @@ class Row_Agent(object):
     def Fuse_RALs(self, _start, _stop):
         """
         _start and _stop are the indeces of the RALs to fuse so that they 
-        correspond to the boundaries [_start _stop[
+        correspond to the bounderies [_start _stop[
         """
         
 # =============================================================================
@@ -1340,7 +480,7 @@ class Row_Agent(object):
             newYdist = self.InterPlant_Diffs[:_start-1]
         
         tail_newRALs = []
-        if (_stop+1<self.nb_RALs):
+        if (_stop+1<len(self.RALs)):
             new_diffs += [abs(fusion_RAL.y-self.RALs[_stop+1].y)]
             tail_newRALs = self.RALs[_stop+1:]
         
@@ -1352,8 +492,7 @@ class Row_Agent(object):
         
         self.InterPlant_Diffs = newYdist
         
-        self.RALs = self.RALs[:_start]+[fusion_RAL]+tail_newRALs
-        self.nb_RALs -= 1
+        self.RALs = self.RALs[:_start]+[fusion_RAL]+tail_newRALs        
     
     def Fill_RALs(self, _RAL_1_index, _RAL_2_index, _filling_step):
         
@@ -1391,11 +530,11 @@ class Row_Agent(object):
                 self.InterPlant_Diffs = self.InterPlant_Diffs[:_RAL_1_index]+ \
                                     new_diffs+ \
                                     self.InterPlant_Diffs[_RAL_2_index:]
-                self.nb_RALs += nb_new_RALs
             
     def Fill_or_Fuse_RALs(self, _crit_value, _fuse_factor = 0.5, _fill_factor = 1.5):
+        nb_RALs = len(self.RALs)
         i = 0
-        while i < self.nb_RALs-1:
+        while i < nb_RALs-1:
             
 # =============================================================================
 #             print(self.InterPlant_Diffs[i], _fuse_factor*_crit_value)
@@ -1413,6 +552,7 @@ class Row_Agent(object):
                         self.Fill_RALs(i, i+1, int(1.1*_fuse_factor*_crit_value))
             
             i += 1
+            nb_RALs = len(self.RALs)
         
 # =============================================================================
 #         print("After fill and fuse procedure over all the crop row, the new RAls list is :", end = ", ")
@@ -1420,88 +560,23 @@ class Row_Agent(object):
 #             print([_RAL.x, _RAL.y], end=", ")
 # =============================================================================
     
-    def Check_RALs_Exploration(self):
-        """
-        Looks at the exploration status of the RALs: where are the farthest RAs
-        under supervision of the RALs. Checks that neighbour RALs do not overlap
-        with each other.
-        If overlapping is detected (mainly North or South), the RAs of each are
-        ordered to withdraw and are fixed.
-        """
-        
-        for i in range (self.nb_RALs-1):
-            if (not self.RALs[i].With_Neighbour_Overlap[0] and not self.RALs[i+1].With_Neighbour_Overlap[1]):
-                _y_north_border = self.RALs[i].y + self.RALs[i].Borders_Distance[0]
-                _y_south_border = self.RALs[i+1].y + self.RALs[i+1].Borders_Distance[1]
-                
-                if (_y_north_border > _y_south_border):
-                    
-# =============================================================================
-#                     print(i, self.RALs[i].Borders_Distance[0], self.RALs[i].y, _y_north_border)
-#                     print (i+1, self.RALs[i+1].Borders_Distance[1], self.RALs[i+1].y, _y_south_border)
-# =============================================================================
-                    
-                    _candidate_north_update = []
-                    _candidate_south_update = []
-                    
-                    for _RA in self.RALs[i].RA_list_card[0]:#North
-# =============================================================================
-#                         print("North RAs y", _RA.global_y, _y_south_border)
-# =============================================================================
-                        if (_RA.global_y > _y_south_border):
-                            _half_y_overlap = int((_RA.global_y - _y_south_border)*0.5)+1
-                            
-                            if (_RA.Fixed):
-                                _RA.Fixed = False
-                            else:
-                                self.RALs[i].nb_RAs_Fixed += 1
-                                
-                            _RA.Update_All_coords(0, -_half_y_overlap)
-                            _RA.Fixed = True
-                            _candidate_north_update += [_RA.local_y]
-                        
-                    for _RA in self.RALs[i+1].RA_list_card[1]:#South
-# =============================================================================
-#                         print("South RAs y", _RA.global_y, _y_north_border)
-# =============================================================================
-                        if (_RA.global_y < _y_north_border):
-                            _half_y_overlap = int((_y_north_border - _RA.global_y)*0.5)+1
-                            
-                            if (_RA.Fixed):
-                                _RA.Fixed = False
-                            else:
-                                self.RALs[i+1].nb_RAs_Fixed += 1
-                                
-                            _RA.Update_All_coords(0, _half_y_overlap)
-                            _RA.Fixed = True
-                            _candidate_south_update += [_RA.local_y]
-                    
-# =============================================================================
-#                     print(_candidate_north_update)
-# =============================================================================
-                    self.RALs[i].Borders_Distance[0] = max(_candidate_north_update)
-                    self.RALs[i].With_Neighbour_Overlap[0] = True
-# =============================================================================
-#                     print(_candidate_south_update)
-# =============================================================================
-                    self.RALs[i+1].Borders_Distance[1] = min(_candidate_south_update)
-                    self.RALs[i+1].With_Neighbour_Overlap[1] = True
-                    
-# =============================================================================
-#                     print(i, self.RALs[i].Borders_Distance[0], self.RALs[i].y, _y_north_border)
-#                     print (i+1, self.RALs[i+1].Borders_Distance[1], self.RALs[i+1].y, _y_south_border)
-# =============================================================================
-            
-    
     def Get_RALs_mean_points(self):
         for _RAL in self.RALs:
+# =============================================================================
+#             print("Getting mean active RAs point for RAL", [_RAL.x, _RAL.y])
+# =============================================================================
             _RAL.Get_RAs_Mean_Point()
-            #_RAL.Get_RAs_Mean_Point_3()
     
     def Get_Row_Mean_X(self):
         RALs_X = []
+        
         for _RAL in self.RALs:
             RALs_X += [_RAL.active_RA_Point[0]]
+        
+# =============================================================================
+#         print(RALs_X)
+# =============================================================================
+        
         self.Row_Mean_X = int(np.mean(RALs_X))
         
     def Get_Inter_Plant_Diffs(self):
@@ -1599,53 +674,31 @@ class Row_Agent(object):
     
     def Destroy_Low_Activity_RALs(self):
         
+        nb_RALs = len(self.RALs)
         i = 0
-        while i < self.nb_RALs:
+        while i < nb_RALs:
 # =============================================================================
 #             print(self.RALs[i].x, self.RALs[i].y, self.RALs[i].recorded_Decision_Score[-1])
 # =============================================================================
-            if (self.RALs[i].recorded_Decision_Score[-1] < 0.05):
-# =============================================================================
-#                 print(self.RALs[i].recorded_Decision_Score[-1])
-# =============================================================================
-                self.Destroy_RALs(i, i+1, self.nb_RALs)
-                self.nb_RALs -= 1
+            if (self.RALs[i].recorded_Decision_Score[-1] < 0.01):
+                self.Destroy_RALs(i, i+1, nb_RALs)
+                nb_RALs -= 1
             else:
                 i += 1
     
-    def Destroy_Small_RALs(self):
-        i = 0
-        while i < self.nb_RALs:
-            if (self.RALs[i].nb_RAs < 0.25*(4*2*self.RALs[i].group_size+1)/self.group_step):
-                if (self.RALs[i].Fixed):
-                    self.nb_Fixed_RALs -= 1
-                self.Destroy_RALs(i, i+1, self.nb_RALs)
-                self.nb_RALs -= 1
-                
-            else:
-                i += 1
-    
-    def Adapt_RALs_group_size_2(self):
+    def Adapt_RALs_group_size(self):
         for _RAL in self.RALs:
-            if (not _RAL.Fixed):
-                _RAL.Manage_RAs_distribution()
-                if (_RAL.Fixed):
-                    self.nb_Fixed_RALs += 1
-    
-    def Get_RALs_Surface(self):
-        for _RAL in self.RALs:
-            _RAL.Compute_Surface()
-            _RAL.Compute_Surface_2()
-            _RAL.Compute_Surface_3()
-    
-    def Set_Up_RALs_Growth_Mode(self):
-        for _RAL in self.RALs:
-            _RAL.RAs_border_init()
+            if (_RAL.recorded_Decision_Score[-1] < 0.2 and
+                _RAL.group_size > 5*_RAL.group_step):
+                _RAL.group_size -= 1
+                _RAL.RAs_square_init()
+            elif (_RAL.recorded_Decision_Score[-1] > 0.8 and
+                  _RAL.group_size < 50*_RAL.group_step):
+                _RAL.group_size += 1
+                _RAL.RAs_square_init()
 
 class Agents_Director(object):
     """
-    Agent directeur
-    
     _plant_FT_pred_per_crop_rows (list of lists extracted for a JSON file):
         array containing the predicted position of plants organized by rows.
         The lists corresponding to rows contain other lists of length 2 giving 
@@ -1691,8 +744,6 @@ class Agents_Director(object):
         
         self.group_size = _group_size
         self.group_step = _group_step
-        
-        self.InterPlant_Y = 0
         
         self.RALs_fuse_factor = _RALs_fuse_factor
         self.RALs_fill_factor = _RALs_fill_factor
@@ -1877,24 +928,19 @@ class Agents_Director(object):
         for _RowA in self.RowAs:#[10:11]:
             _RowA.Destroy_Low_Activity_RALs()
     
-    def ORDER_ROWAs_to_Destroy_Small_RALs(self):
-        for _RowA in self.RowAs:
-            _RowA.Destroy_Small_RALs()
-    
     def ORDER_RowAs_to_Adapt_RALs_sizes(self):
         for _RowA in self.RowAs:#[10:11]:
-            #_RowA.Adapt_RALs_group_size()
-            _RowA.Adapt_RALs_group_size_2()
+            _RowA.Adapt_RALs_group_size()
     
-    def ORDER_RowAs_for_Extensive_RALs_Init(self):
+    def ORDER_Rows_for_Extensive_RALs_Init(self):
         for _RowA in self.RowAs:#[10:11]:
             _RowA.Extensive_Init(1.1*self.RALs_fuse_factor*self.InterPlant_Y)
     
-    def ORDER_RowAs_for_Edges_Exploration(self):
+    def ORDER_Rows_for_Edges_Exploration(self):
         for _RowA in self.RowAs:#[10:11]:
             _RowA.Edge_Exploration(1.1*self.RALs_fuse_factor*self.InterPlant_Y)
     
-    def Check_RowAs_Proximity(self):
+    def Check_Rows_Proximity(self):
         nb_Rows = len(self.RowAs)
         i=0
         while i < nb_Rows-1:
@@ -1916,24 +962,8 @@ class Agents_Director(object):
                 nb_Rows-=1
             else:
                 i+=1
-    
-    def ORDER_RowAs_for_RALs_Surface_Compute(self):
-        for _RowA in self.RowAs:
-            _RowA.Get_RALs_Surface()
                 
-    def ORDER_Check_RALs_Exploration(self):
-        for _RowA in self.RowAs:
-            _RowA.Check_RALs_Exploration()
-                
-    def Count_nb_Fixed_RAL(self):
-        nb_fixed = 0
-        for _RowA in self.RowAs:
-            nb_fixed += _RowA.nb_Fixed_RALs
-        return nb_fixed
-    
-    def Switch_From_Search_To_Growth(self):
-        for _RowA in self.RowAs:
-            _RowA.Set_Up_RALs_Growth_Mode()
+        
 # =============================================================================
 # Simulation Definition
 # =============================================================================
@@ -1991,7 +1021,6 @@ class Simulation_MAS(object):
     
     _simulation_name (string, optional with default value = ""):
         Name given to the simulation. used as a prefix of the some saved files.
-    
     """
     
     def __init__(self, _RAW_img_array,
@@ -2036,14 +1065,14 @@ class Simulation_MAS(object):
         self.FN=0
         self.real_plant_detected_keys = []
         
-        print("Done")
-        
         self.follow_simulation = _follow_simulation
         if (_follow_simulation):
             self.follow_simulation_save_path = _follow_simulation_save_path
             gIO.check_make_directory(self.follow_simulation_save_path)
             
         self.simulation_name = _simulation_name
+        
+        print("Done")
         
     def Initialize_AD(self):
         self.AD = Agents_Director(self.plant_FT_pred_par_crop_rows,
@@ -2054,12 +1083,12 @@ class Simulation_MAS(object):
         self.AD.Initialize_RowAs()
     
     def Perform_Search_Simulation(self, _steps = 10,
-                                  _coerced_X = False,
-                                  _coerced_Y = False,
-                                  _analyse_and_remove_Rows = False,
-                                  _edge_exploration = False):
+                                   _coerced_X = False,
+                                   _coerced_Y = False,
+                                   _analyse_and_remove_Rows = False,
+                                   _edge_exploration = False):
         print()
-        print("Starting Search Simulation:")
+        print("Starting Search simulation:")
         self.steps = _steps
         self.max_steps_reached = False
         
@@ -2069,15 +1098,12 @@ class Simulation_MAS(object):
         self.AD.ORDER_RowAs_to_Update_InterPlant_Y()
         self.AD.Summarize_RowAs_InterPlant_Y()
         
-        self.search_simulation = True
-        self.growth_simulation = False
-        
         if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_A")
+            self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                  _save_name=self.simulation_name+"_A")
         
         if (_edge_exploration):
-            self.AD.ORDER_RowAs_for_Edges_Exploration()
+            self.AD.ORDER_Rows_for_Edges_Exploration()
             if (self.follow_simulation):
                 self.Show_Adjusted_And_RALs_positions(_save=True,
                                                       _save_name=self.simulation_name+"_B")
@@ -2092,10 +1118,10 @@ class Simulation_MAS(object):
         i = 0
         while i < self.steps and not stop_simu:
             print("Simulation step {0}/{1} (max)".format(i+1, _steps))
-                        
-            time_detailed=[]
-            t0 = time.time()
             
+            time_detailed=[]
+            
+            t0 = time.time()
             self.AD.ORDER_RowAs_for_RALs_mean_points()
             time_detailed += [time.time()-t0]
             
@@ -2117,31 +1143,25 @@ class Simulation_MAS(object):
             self.AD.ORDER_RowAs_for_Moving_RALs_to_active_points()
             time_detailed += [time.time()-t0]
             
-# =============================================================================
-#             if (self.follow_simulation):
-#                 self.Show_Adjusted_And_RALs_positions(_save=True,
-#                                                       _save_name=self.simulation_name+"_C_{0}_1".format(i+1))
-# =============================================================================
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_1".format(i+1))
             
-# =============================================================================
-#             t0 = time.time()
-#             self.AD.ORDER_RowAs_to_Adapt_RALs_sizes()
-#             time_detailed += [time.time()-t0]
-#             
-#             if (self.follow_simulation):
-#                 self.Show_Adjusted_And_RALs_positions(_save=True,
-#                                                       _save_name=self.simulation_name+"_C_{0}_2".format(i+1))
-# =============================================================================
+            t0 = time.time()
+            self.AD.ORDER_RowAs_to_Adapt_RALs_sizes()
+            time_detailed += [time.time()-t0]
+            
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_2".format(i+1))
             
             t0 = time.time()
             self.AD.ORDER_RowAs_Fill_or_Fuse_RALs()
             time_detailed += [time.time()-t0]
             
-# =============================================================================
-#             if (self.follow_simulation):
-#                 self.Show_Adjusted_And_RALs_positions(_save=True,
-#                                                       _save_name=self.simulation_name+"_C_{0}_3".format(i+1))
-# =============================================================================
+            if (self.follow_simulation):
+                self.Show_Adjusted_And_RALs_positions(_save=True,
+                                                      _save_name=self.simulation_name+"_C_{0}_3".format(i+1))
             
             t0 = time.time()
             self.AD.ORDER_RowAs_to_Destroy_Low_Activity_RALs()
@@ -2152,7 +1172,7 @@ class Simulation_MAS(object):
                                                       _save_name=self.simulation_name+"_C_{0}_4".format(i+1))
             
             t0 = time.time()
-            self.AD.Check_RowAs_Proximity()
+            self.AD.Check_Rows_Proximity()
             time_detailed += [time.time()-t0]
             
             t0 = time.time()
@@ -2166,8 +1186,6 @@ class Simulation_MAS(object):
             
             diff_nb_RALs = self.RALs_recorded_count[-1] - self.RALs_recorded_count[-2]
             
-            
-            
             if (diff_nb_RALs == 0):
                 if not re_eval:
                     self.AD.Summarize_RowAs_InterPlant_Y()
@@ -2179,75 +1197,11 @@ class Simulation_MAS(object):
             
             i += 1
         
-        if (self.follow_simulation):
-            self.Show_Adjusted_And_RALs_positions()
-        #self.AD.ORDER_RowAs_for_RALs_Surface_Compute()
-        
         if (i == self.steps):
             self.max_steps_reached = True
-            print("Search simulation Finished with max steps reached.")
+            print("MAS simulation Finished with max steps reached.")
         else:
-            print("Search simulation Finished")
-    
-    def Perform_Growth_Simulation(self, _steps = 10,
-                                      _coerced_X = False,
-                                      _coerced_Y = False,
-                                      _analyse_and_remove_Rows = False,
-                                      _edge_exploration = False):
-        print()
-        print("Starting Growth Simulation:")
-        self.AD.Switch_From_Search_To_Growth()
-        
-        if (len(self.RALs_recorded_count)==0):
-            self.Count_RALs()
-        
-        self.steps = _steps
-        self.max_steps_reached = False
-        
-        self.search_simulation = False
-        self.growth_simulation = True
-        
-        if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_D")
-        
-        stop_simu = False
-        i = 0
-        while i < self.steps and not stop_simu:
-            print("Simulation step {0}/{1} (max)".format(i+1, _steps))
-            
-            self.AD.ORDER_RowAs_to_Adapt_RALs_sizes()
-            
-# =============================================================================
-#             if (self.follow_simulation):
-#                 self.Show_Adjusted_And_RALs_positions(_save=True,
-#                                                       _save_name=self.simulation_name+"_E_{0}_2".format(i+1))
-# =============================================================================
-                
-            self.AD.ORDER_Check_RALs_Exploration()
-            
-            if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_E_{0}_3".format(i+1))
-            
-            self.AD.ORDER_ROWAs_to_Destroy_Small_RALs()
-            self.Count_RALs()
-            
-            nb_fixed = self.AD.Count_nb_Fixed_RAL()
-            
-            print("Proportion of fixed RAs:", nb_fixed/self.RALs_recorded_count[-1])
-            if (nb_fixed/self.RALs_recorded_count[-1] == 1):
-                stop_simu = True
-            
-            i += 1
-        
-        self.AD.ORDER_RowAs_for_RALs_Surface_Compute()
-        
-        if (i == self.steps):
-            self.max_steps_reached = True
-            print("Growth simulation Finished with max steps reached.")
-        else:
-            print("Growth simulation Finished")
+            print("MAS simulation Finished")
     
     def Correct_Adjusted_plant_positions(self):
         """
@@ -2258,13 +1212,13 @@ class Simulation_MAS(object):
         self.real_plant_keys = []
         for adj_pos_string in self.ADJUSTED_img_plant_positions:
             self.corrected_adjusted_plant_positions += [[int(adj_pos_string["rotated_x"]),
-                                                        int(adj_pos_string["rotated_y"])]]#self.OTSU_img_array.shape[0]-
+                                                        int(adj_pos_string["rotated_y"])]]
             self.real_plant_keys += [str(adj_pos_string["instance_id"])]
         
     def Count_RALs(self):
         RALs_Count = 0
         for _RowA in self.AD.RowAs:
-            RALs_Count += _RowA.nb_RALs
+            RALs_Count += len(_RowA.RALs)
         self.RALs_recorded_count += [RALs_Count]
     
     def Is_Plant_in_RAL_scanning_zone(self, _plant_pos, _RAL):
@@ -2292,12 +1246,8 @@ class Simulation_MAS(object):
                 self.RALs_dict_infos[str(_RAL.x) + "_" + str(_RAL.y)] = {
                 "field_recorded_positions" : _RAL.field_recorded_positions,
                  "recorded_positions" : _RAL.recorded_positions,
-                 "RAs_Local_Positions" : _RAL.RAs_local_positions,
                  "detected_plant" : "",
-                 "RAL_group_size": _RAL.group_size,
-                 "RAL_area_CS": _RAL.area_CS,
-                 "RAL_area_CS2": _RAL.area_CS2,
-                 "RAL_area_CS3": _RAL.area_CS3}
+                 "RAL_group_size": _RAL.group_size}
             self.RALs_nested_positions+=[_row]
         print()
         
@@ -2307,6 +1257,7 @@ class Simulation_MAS(object):
             True positives (labelled plants with a RAL near it)
             False positives (RAL positioned far from a labelled plant)
             False negatives (labelled plant with no RAL near it)
+        
         """
         associated_RAL = 0
         self.nb_real_plants = len(self.corrected_adjusted_plant_positions)
@@ -2329,7 +1280,7 @@ class Simulation_MAS(object):
     
     def Show_RALs_Position(self,
                            _ax = None,
-                           _colors = 'g'):
+                           _color = 'g'):
         """
         Display the Otsu image with overlaying rectangles centered on RALs. The
         size of the rectangle corespond to the area covered by the RAs under the 
@@ -2339,14 +1290,8 @@ class Simulation_MAS(object):
             The axes of an image on which we wish to draw the adjusted 
             position of the plants
         
-        _recorded_position_indeces (optional,list of int):
-            indeces of the recored positions of the RALs we wish to see. By defaullt,
-            the first and last one
-        
-        _colors (optional,list of color references):
-            Colors of the rectangles ordered indentically to the recorded positons
-            of interest. By default red for the first and green for the last 
-            recorded position.
+        _color (optional,list of color references):
+            The color of the rectangle representing a RAL.
         """
         
         if (_ax == None):
@@ -2358,35 +1303,21 @@ class Simulation_MAS(object):
         for _RowsA in self.AD.RowAs:
             
             for _RAL in _RowsA.RALs:
-                
-                if (self.search_simulation and not self.growth_simulation):
-                    #coordinates are the upper left corner of the rectangle
-                    rect = patches.Rectangle((_RAL.x+_RAL.Borders_Distance[3],
-                                              _RAL.y+_RAL.Borders_Distance[1]),
-                                             #2*_RAL.group_size,2*_RAL.group_size,
-                                             _RAL.Borders_Distance[2]+abs(_RAL.Borders_Distance[3]),
-                                             _RAL.Borders_Distance[0]+abs(_RAL.Borders_Distance[1]),
-                                             linewidth=1,
-                                             edgecolor=_colors,
-                                             facecolor='none')
-                    ax.add_patch(rect)
-                
-                if (not self.search_simulation and self.growth_simulation):
-                    _c = ["red", "orange", "purple", "cyan"]
-                    for i in range(4):
-                        x = []
-                        y = []
-                        for _RA in _RAL.RA_list_card[i]:
-                            x += [_RA.global_x]
-                            y += [_RA.global_y]
-                        plt.plot(x, y, color=_c[i], linewidth=1, markersize = 1)#, marker="o")
+                #coordinates are the upper left corner of the rectangle
+                rect = patches.Rectangle((_RAL.x-_RAL.group_size,
+                                          _RAL.y-_RAL.group_size),
+                                          2*_RAL.group_size,
+                                          2*_RAL.group_size,
+                                         linewidth=1,
+                                         edgecolor=_color,
+                                         facecolor='none')
+                ax.add_patch(rect)
         
 # =============================================================================
 #         plt.xlim(170, 270)
 #         plt.ylim(1350, 1450)
 # =============================================================================
-        
-                
+    
     def Show_Adjusted_Positions(self, _ax = None, _color = "b"):
         """
         Display the adjusted positions of the plants.
@@ -2425,7 +1356,7 @@ class Simulation_MAS(object):
         ax.imshow(self.OTSU_img_array)
         
         self.Show_RALs_Position(_ax = ax,
-                                _colors = _colors_recorded)
+                                _color = _colors_recorded)
 # =============================================================================
 #         self.Show_Adjusted_Positions(_ax = ax,
 #                                      _color = _color_adjusted)
@@ -2434,7 +1365,6 @@ class Simulation_MAS(object):
         if (_save):
             fig.savefig(self.follow_simulation_save_path+"/"+_save_name)
             plt.close()
-            #pass
     
     def Show_RALs_Deicision_Scores(self):
         """
@@ -2587,7 +1517,7 @@ class MetaSimulation(object):
         pivot = np.array([0.5 * self.data_input_raw[0].shape[1],
                           0.5 * self.data_input_raw[0].shape[0]])
         
-        R = rotation_matrix(np.deg2rad(80))
+        R = rotation_matrix(np.deg2rad(75))
         
         print(p1, p2, pivot, R)
             
@@ -2620,8 +1550,7 @@ class MetaSimulation(object):
                              _coerced_X = False,
                              _coerced_Y = False,
                              _analyse_and_remove_Rows = False,
-                             _rows_edges_exploration = False,
-                             _growth_monitoring_only = False):
+                             _rows_edges_exploration = False):
 
         """
         Launch an MAS simulation for each images. The raw images are labelled.
@@ -2633,14 +1562,11 @@ class MetaSimulation(object):
         self.coerced_Y = _coerced_Y
         self.analyse_and_remove_Rows = _analyse_and_remove_Rows
         self.rows_edges_exploration = _rows_edges_exploration
-        self.growth_monitoring = _growth_monitoring_only
         
-# =============================================================================
-#         if (self.nb_images > 1):
-#             self.Get_Field_Assembling_Offsets()
-#         else:
-#             self.all_offsets=[[0,0]]
-# =============================================================================
+        if (self.nb_images > 1):
+            self.Get_Field_Assembling_Offsets()
+        else:
+            self.all_offsets=[[0,0]]
         
         for i in range(self.nb_images):
             
@@ -2654,21 +1580,15 @@ class MetaSimulation(object):
                                         self.data_input_OTSU[i],
                                         self.group_size, self.group_step,
                                         self.RALs_fuse_factor, self.RALs_fill_factor,
-                                        [0,0],
+                                        self.all_offsets[i],
                                         self.data_adjusted_position_files[i])
                 MAS_Simulation.Initialize_AD()
                 
-                if (not _growth_monitoring_only):
-                    MAS_Simulation.Perform_Search_Simulation(self.simulation_step,
-                                                                      self.coerced_X,
-                                                                      self.coerced_Y,
-                                                                      self.analyse_and_remove_Rows,
-                                                                      self.rows_edges_exploration)
-                MAS_Simulation.Perform_Growth_Simulation(self.simulation_step,
-                                                                  self.coerced_X,
-                                                                  self.coerced_Y,
-                                                                  self.analyse_and_remove_Rows,
-                                                                  self.rows_edges_exploration)
+                MAS_Simulation.Perform_Search_Simulation(self.simulation_step,
+                                                       self.coerced_X,
+                                                       self.coerced_Y,
+                                                       self.analyse_and_remove_Rows,
+                                                       self.rows_edges_exploration)
                 
                 MAS_Simulation.Get_RALs_infos()
                 self.Add_Simulation_Results(i, MAS_Simulation)
@@ -2697,7 +1617,7 @@ class MetaSimulation(object):
 
         """
         Launch an MAS simulation for each images. The raw images are NOT labelled.
-,        """
+        """
         
         self.log = []
         
@@ -2710,7 +1630,7 @@ class MetaSimulation(object):
 #         if (self.nb_images > 1):
 #             self.Get_Field_Assembling_Offsets()
 #         else:
-#             self.all_offsets=[[0,0] for i in range(self.nb_images)]
+#             self.all_offsets=[[0,0]]
 # =============================================================================
         
         for i in range(self.nb_images):
@@ -2729,11 +1649,11 @@ class MetaSimulation(object):
                                         self.data_adjusted_position_files)
                 MAS_Simulation.Initialize_AD()
                 
-                MAS_Simulation.Perform_Search_Simulation(self.simulation_step,
-                                                                  self.coerced_X,
-                                                                  self.coerced_Y,
-                                                                  self.analyse_and_remove_Rows,
-                                                                  self.rows_edges_exploration)
+                MAS_Simulation.Perform_Simulation(self.simulation_step,
+                                                  self.coerced_X,
+                                                  self.coerced_Y,
+                                                  self.analyse_and_remove_Rows,
+                                                  self.rows_edges_exploration)
                 
                 MAS_Simulation.Get_RALs_infos()
                 self.Add_Simulation_Results(i, MAS_Simulation)
@@ -2755,7 +1675,7 @@ class MetaSimulation(object):
     def Get_Simulation_Results(self, _MAS_Simulation):
         
         """
-        Gathers the general simulation results
+        Gathers the generalk simulation results
         """
         
         if (self.data_adjusted_position_files != None):
@@ -2764,7 +1684,7 @@ class MetaSimulation(object):
             print("Done")
         
         data = {"Time_per_steps": _MAS_Simulation.simu_steps_times,
-                "Time_per_steps_details": _MAS_Simulation.simu_steps_time_detailed,
+                "Time_per_steps_detailes": _MAS_Simulation.simu_steps_time_detailed,
                 "Image_Labelled": _MAS_Simulation.labelled,
                 "NB_labelled_plants": _MAS_Simulation.nb_real_plants,
                 "NB_RALs" : _MAS_Simulation.RALs_recorded_count[-1],
@@ -2792,8 +1712,12 @@ class MetaSimulation(object):
         """
         for i in range (self.nb_images):
             for adj_pos_string in self.data_adjusted_position_files[i]:
-                #[_rx, _ry, x, y] = adj_pos_string.split(",")
+# =============================================================================
+#                 [_rx, _ry, x, y] = adj_pos_string.split(",")
+#                 self.whole_field_counted_plants[_rx + "_" + _ry]=0
+# =============================================================================
                 self.whole_field_counted_plants[str(adj_pos_string["instance_id"])]=0
+
     
     def Add_Simulation_Results(self, _image_index, _MAS_Simulation):
         """
@@ -2828,9 +1752,6 @@ class MetaSimulation(object):
             _name+="_anrR2"
         if (self.rows_edges_exploration):
             _name+="_REE"
-        if (self.growth_monitoring):
-            _name += "_GM"
-        
         return _name
     
     def Save_MetaSimulation_Results(self):
@@ -2838,7 +1759,7 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         meta_simulation_results dictionary as a JSON file.
         """
-        name = self.Make_File_Name("MetaSimulationResults_"+self.simu_name)
+        name = self.Make_File_Name("MetaSimulationResults_v16_"+self.simu_name)
         
         file = open(self.path_output+"/"+name+".json", "w")
         json.dump(self.meta_simulation_results, file, indent = 3)
@@ -2849,7 +1770,7 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         meta_simulation_results dictionary as a JSON file.
         """
-        name = self.Make_File_Name("RALs_Infos_"+self.simu_name)
+        name = self.Make_File_Name("RALs_Infos_v16_"+self.simu_name)
         file = open(self.path_output+"/"+name+".json", "w")
         json.dump(self.RALs_data, file, indent = 2)
         file.close()
@@ -2860,12 +1781,12 @@ class MetaSimulation(object):
         image. The json file is in the exact same format as The plant predictions
         on
         """
-        name = self.Make_File_Name("RALs_NestedPositions_"+self.simu_name)
-        _path=self.path_output+"/RALs_NestedPositions"
+        name = self.Make_File_Name("RALs_NestedPositions_v16_"+self.simu_name)
+        _path=self.path_output+"/"+name
         gIO.check_make_directory(_path)
         counter = 0
         for _nested_pos in self.RALs_all_nested_positions:
-            name = self.names_input_raw[counter].split(".")[0]+"NestedPositions"
+            name = self.names_input_raw[counter]+"NestedPositions"
             file = open(_path+"/"+name+".json", "w")
             json.dump(_nested_pos, file, indent = 2)
             file.close()
@@ -2876,12 +1797,12 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         whole_field_counted_plants dictionary as a JSON file.
         """
-        name = self.Make_File_Name("WholeFieldResults_"+self.simu_name)
+        name = self.Make_File_Name("WholeFieldResults_v16_"+self.simu_name)
         file = open(self.path_output+"/"+name+".json", "w")
         json.dump(self.whole_field_counted_plants, file, indent = 2)
         file.close()
     
     def Save_Log(self):
-        name = self.Make_File_Name("LOG_MetaSimulationResults_"+self.simu_name)
+        name = self.Make_File_Name("LOG_MetaSimulationResults_v16_"+self.simu_name)
         gIO.writer(self.path_output, name+".txt", self.log, True, True)
         

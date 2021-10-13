@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat May 23 11:55:31 2020
-
-@author: eliot
-"""
 
 import os
 import json
 import numpy as np
 from PIL import Image
 
-import MAS_v16 as MAS
+import MAS
 
 os.chdir("../Utility")
 import general_IO as gIO
