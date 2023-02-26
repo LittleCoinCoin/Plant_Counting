@@ -5,14 +5,15 @@ Created on Mon Oct 26 15:55:35 2020
 @author: eliot
 """
 import os
+import sys
 
-os.chdir("../Pre_Treatments")
+sys.path.append(os.path.abspath("../Pre_Treatments"))
 import Process_image_for_FT as PiFT
 
-os.chdir("../Fourier")
+sys.path.append(os.path.abspath("../Fourier"))
 import FrequencyAnalysis as FA
 
-os.chdir("../MAS")
+sys.path.append(os.path.abspath("../MAS"))
 import Multi_Images_Simulation_v12bis as MIS
 
 def CompleteProcess(_path_input_rgb_img, _path_output_root,

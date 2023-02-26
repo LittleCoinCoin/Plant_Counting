@@ -8,11 +8,12 @@ Created on Sat May 23 11:55:31 2020
 import os
 import json
 import numpy as np
+import sys
 from PIL import Image
 
 import MAS_v16 as MAS
 
-os.chdir("../Utility")
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
 
@@ -58,9 +59,9 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # Files Names Collection
     # =============================================================================
     
-    names_input_raw = os.listdir(_path_input_rgb_img)
+    names_input_raw = gIO.listdir_nohidden(_path_input_rgb_img)
     #names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
-    names_input_OTSU = os.listdir(path_input_OTSU)
+    names_input_OTSU = gIO.listdir_nohidden(path_input_OTSU)
     names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
     
     # =============================================================================
