@@ -49,17 +49,19 @@ variables the user can change:
 """
 
 import os
+import importlib
+import sys
 
-os.chdir("../Utility")
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
-os.chdir("../Segmentation_Otsu")
+sys.path.append(os.path.abspath("../Segmentation_Otsu"))
 import data
 
-os.chdir("../BSAS")
+sys.path.append(os.path.abspath("../BSAS"))
 import bsas
 
-os.chdir("../Crops_Rows_Angle_Detection")
+sys.path.append(os.path.abspath("../Crops_Rows_Angle_Detection"))
 import CRAD
 
 
