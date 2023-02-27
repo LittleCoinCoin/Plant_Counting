@@ -26,10 +26,11 @@ import matplotlib.patches as patches
 import numpy as np
 import time
 import json
+import sys
 from sklearn.cluster import KMeans
 from scipy.stats import ttest_ind
 
-os.chdir("../Utility")
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
 # =============================================================================

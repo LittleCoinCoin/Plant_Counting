@@ -25,10 +25,11 @@ variables the user can change:
     - bins_div_Y (int, min = 1): same as "bins_div_X" but on the Y axis
 """
 import os
+import sys
 import numpy as np
 #import matplotlib.pyplot as plt
 
-os.chdir("../Utility")
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
 # =============================================================================

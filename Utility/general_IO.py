@@ -289,3 +289,9 @@ def find_previous_dir(_dir):
         return (rest_of_tree, _folder[::-1])
     else:
         return (None, None)
+
+def listdir_nohidden(_path):
+    """
+    Filter hidden files (i.e. .DS_Store on MacOS)
+    """
+    return [f for f in os.listdir(_path) if not f.startswith('.')]
