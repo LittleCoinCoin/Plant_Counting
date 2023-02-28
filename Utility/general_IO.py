@@ -142,6 +142,23 @@ def WriteJson(_path, _file_name, _content, _indent=1):
     json.dump(_content, file, indent = _indent)
     file.close()
 
+def ReadJson(_path, _file_name):
+    """
+    Uses the Json library to get the data stored in json file as a dictionary
+    
+    _path (string):
+        path pointing to the directory where _file_name is. Relative paths are working
+    
+    _file_name (string):
+        name of the file (WITHOUT the .json extension) to be read
+        
+    RETURNS the content of _path/_file_name as a dictionary
+    """
+    file = open(_path+"/"+_file_name+".json", "r")
+    res = json.load(file)
+    file.close()
+    return res
+
 def copier(_path, _file_name, _new_path, _new_file_name, _overwrite = False):
     
     """
