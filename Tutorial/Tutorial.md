@@ -1,11 +1,14 @@
 # Instructions
 
 ## Dependencies 
+Here are some special dependencies that are typically not included by default in Anaconda.
 - [Pillow](https://anaconda.org/anaconda/pillow)
 - [PyClustering](https://anaconda.org/conda-forge/pyclustering)
 - [Scikit Learn](https://anaconda.org/anaconda/scikit-learn)
 - [Scikit Image](https://anaconda.org/anaconda/scikit-image)
 - [OpenCV](https://anaconda.org/conda-forge/opencv)
+
+The full list of requirements is availalble [here]("https://github.com/LittleCoinCoin/Plant_Counting/blob/Release/requirements.txt")(hanks to @ef1rspb in [#2](https://github.com/LittleCoinCoin/Plant_Counting/pull/2)). It can be installed via: `pip3 install -r ./requirements.txt`
 
 ## Description
 This tutorial is based on the dummy images you may find in */Data/Non-Labelled/Set1*.
