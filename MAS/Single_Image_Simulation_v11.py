@@ -9,9 +9,11 @@ import os
 import json
 import numpy as np
 from PIL import Image
-
 import MAS_v16 as MAS
+import sys
 
+sys.path.append(os.path.abspath("../Utility"))
+import general_IO as gIO
 
 # =============================================================================
 # Utility Functions Definition
@@ -52,10 +54,10 @@ path_input_OTSU = path_input_root+"/Output_General/Set1/Output/Session_"+\
 path_input_PLANT_FT_PRED = path_input_root+"/Output_General/Set1/Output_FA/Session_"+\
                             str(session_number)+"/Plant_FT_Predictions"
 
-names_input_raw = os.listdir(path_input_raw)
+names_input_raw = gIO.listdir_nohidden(path_input_raw)
 #names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
-names_input_OTSU = os.listdir(path_input_OTSU)
-names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
+names_input_OTSU = gIO.listdir_nohidden(path_input_OTSU)
+names_input_PLANT_FT_PRED = gIO.listdir_nohidden(path_input_PLANT_FT_PRED)
 
 # =============================================================================
 # Data Collection
