@@ -342,7 +342,7 @@ class Row_Agent(object):
         
         for _plant_pred in self.plant_FT_pred_in_crop_row:
             RAL = ReactiveAgent_Leader(_x = _plant_pred[0],
-                                       _y = self.OTSU_img_array.shape[0] - _plant_pred[1],
+                                       _y = _plant_pred[1],
                                        _img_array = self.OTSU_img_array,
                                        _group_size = self.group_size,
                                        _group_step = self.group_step,
