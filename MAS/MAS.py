@@ -1013,7 +1013,12 @@ class Simulation_MAS(object):
     _follow_simulation (bool, optional with default value = False):
         Generates the plot showing all RALs and target positions at every steps
         of the simulation to follow the movements and theevolution of the number
-        RALs
+        RALs.
+    
+    _show_labelled_plant_positions(bool, optional with default value = false):
+        Whether to plot the positions of the plants in labelled images. This
+        has an effect only in the case that _ADJUSTED_img_plant_positions are
+        provided and _follow_simulation is set to True.
     
     _follow_simulation_save_path(string, optional with default value ""):
         The path where the plots following the steps of the simulation will be 
@@ -1030,6 +1035,7 @@ class Simulation_MAS(object):
                  _field_offset = [0,0],
                  _ADJUSTED_img_plant_positions = None,
                  _follow_simulation = False,
+                 _show_labelled_plant_positions = False,
                  _follow_simulation_save_path = "",
                  _simulation_name = ""):
         
@@ -1069,6 +1075,7 @@ class Simulation_MAS(object):
         if (_follow_simulation):
             self.follow_simulation_save_path = _follow_simulation_save_path
             gIO.check_make_directory(self.follow_simulation_save_path)
+        self.show_labelled_plant_positions = _show_labelled_plant_positions
             
         self.simulation_name = _simulation_name
         
@@ -1099,14 +1106,26 @@ class Simulation_MAS(object):
         self.AD.Summarize_RowAs_InterPlant_Y()
         
         if (self.follow_simulation):
-            self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                  _save_name=self.simulation_name+"_A")
+            positionFig = None
+            if (self.show_labelled_plant_positions):
+                positionFig = self.Show_Adjusted_Positions(_fig = positionFig)
+                
+            positionFig = self.Show_RALs_Positions(_fig = positionFig,
+                                     _additive_drawing=self.show_labelled_plant_positions,
+                                     _save=True,
+                                     _save_name=self.simulation_name+"_A")
         
         if (_edge_exploration):
             self.AD.ORDER_Rows_for_Edges_Exploration()
+            
             if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_B")
+                if (self.show_labelled_plant_positions):
+                    positionFig = self.Show_Adjusted_Positions(_fig = positionFig)
+                    
+                positionFig = self.Show_RALs_Positions(_fig = positionFig,
+                                         _additive_drawing=self.show_labelled_plant_positions,
+                                         _save=True,
+                                         _save_name=self.simulation_name+"_B")
         
         self.AD.ORDER_RowAs_to_Update_InterPlant_Y()
         
@@ -1144,32 +1163,49 @@ class Simulation_MAS(object):
             time_detailed += [time.time()-t0]
             
             if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_C_{0}_1".format(i+1))
+                if (self.show_labelled_plant_positions):
+                    positionFig = self.Show_Adjusted_Positions(_fig = positionFig)
+                self.Show_RALs_Positions(_fig=positionFig,
+                                         _additive_drawing=self.show_labelled_plant_positions,
+                                         _save=True,
+                                         _save_name=self.simulation_name+"_C_{0}_1".format(i+1))
             
             t0 = time.time()
             self.AD.ORDER_RowAs_to_Adapt_RALs_sizes()
             time_detailed += [time.time()-t0]
             
             if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_C_{0}_2".format(i+1))
+                if (self.show_labelled_plant_positions):
+                    positionFig = self.Show_Adjusted_Positions(_fig = positionFig)
+                self.Show_RALs_Positions(_fig=positionFig,
+                                         _additive_drawing=self.show_labelled_plant_positions,
+                                         _save=True,
+                                         _save_name=self.simulation_name+"_C_{0}_2".format(i+1))
             
             t0 = time.time()
             self.AD.ORDER_RowAs_Fill_or_Fuse_RALs()
             time_detailed += [time.time()-t0]
             
             if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_C_{0}_3".format(i+1))
+                if (self.show_labelled_plant_positions):
+                    positionFig = self.Show_Adjusted_Positions(_fig = positionFig)
+                self.Show_RALs_Positions(_fig=positionFig,
+                                         _additive_drawing=self.show_labelled_plant_positions,
+                                         _save=True,
+                                         _save_name=self.simulation_name+"_C_{0}_3".format(i+1))
             
             t0 = time.time()
             self.AD.ORDER_RowAs_to_Destroy_Low_Activity_RALs()
             time_detailed += [time.time()-t0]
             
             if (self.follow_simulation):
-                self.Show_Adjusted_And_RALs_positions(_save=True,
-                                                      _save_name=self.simulation_name+"_C_{0}_4".format(i+1))
+                if (self.show_labelled_plant_positions):
+                    positionFig = self.Show_Adjusted_Positions(_fig = positionFig)
+                self.Show_RALs_Positions(_fig=positionFig,
+                                         _additive_drawing=self.show_labelled_plant_positions,
+                                         _save=True,
+                                         _save_name=self.simulation_name+"_C_{0}_4".format(i+1))
+                plt.close() #closing the plot after the last information has been added.
             
             t0 = time.time()
             self.AD.Check_Rows_Proximity()
@@ -1278,27 +1314,45 @@ class Simulation_MAS(object):
         self.FN = len(self.ADJUSTED_img_plant_positions) - self.TP
         self.FP = self.RALs_recorded_count[-1] - associated_RAL
     
-    def Show_RALs_Position(self,
-                           _ax = None,
-                           _color = 'g'):
+    def Show_RALs_Positions(self, _fig = None,  _additive_drawing = False,
+                            _color = 'g', _save=False, _save_name=""):
         """
         Display the Otsu image with overlaying rectangles centered on RALs. The
         size of the rectangle corespond to the area covered by the RAs under the 
         RALs supervision.
         
-        _ax (matplotlib.pyplot.axes, optional):
-            The axes of an image on which we wish to draw the adjusted 
-            position of the plants
+        _fig (matplotlib.pyplot.figure, optional):
+            The figure of on which we wish to draw the RALs
         
         _color (optional,list of color references):
             The color of the rectangle representing a RAL.
+            
+        _additive_drawing(bool, optional):
+            Whether the new positions should be drawn over the previous ones.
+            This has an effect only if a figure is provided via _fig.
+        
+        _save (optional, bool):
+            Whether to save the plot as an image. Set to True to save; False to
+            NOT save.
+        
+        _save_name (optional, string):
+            The name of the image of the plot in case we are saving it.
+        
+        Returns:
+            The matplotlib.pyplot.figure on which the RALs were drawn. If the 
+            parameter _ax was given, then it returns it. Otherwise, it is the
+            newly created figure in this method that is returned.
         """
         
-        if (_ax == None):
-            fig, ax = plt.subplots(1)
+        if (_fig == None):
+            fig = plt.figure(figsize=(5,5),dpi=300)
+            ax = fig.add_subplot(111)
             ax.imshow(self.OTSU_img_array)
         else:
-            ax = _ax
+            fig = _fig
+            ax = _fig.get_axes()[0]
+            if (not _additive_drawing):
+                ax.patches = []#clearing previous positions
         
         for _RowsA in self.AD.RowAs:
             
@@ -1312,29 +1366,51 @@ class Simulation_MAS(object):
                                          edgecolor=_color,
                                          facecolor='none')
                 ax.add_patch(rect)
+        if (_save):
+            fig.savefig(self.follow_simulation_save_path+"/"+_save_name)
         
-# =============================================================================
-#         plt.xlim(170, 270)
-#         plt.ylim(1350, 1450)
-# =============================================================================
+        return fig
     
-    def Show_Adjusted_Positions(self, _ax = None, _color = "b"):
+    def Show_Adjusted_Positions(self, _fig = None, _additive_drawing = False,
+                                _color = "r", _save=False, _save_name=""):
         """
-        Display the adjusted positions of the plants.
-        This is considered as the ground truth.
+        Displays the adjusted positions of the plants if known (only useful if
+        labelled images are provided). This is considered as the ground truth.
         
-        _ax (matplotlib.pyplot.axes, optional):
-            The axes of an image on which we wish to draw the adjusted 
-            position of the plants
+        _fig (matplotlib.pyplot.figure, optional):
+            The figure on which we wish to draw the adjusted position of the
+            plants. This can only be used if labelled images were provided.
         
-        _color (string):
-            color of the circles designating the plants
+        _color (string, optional):
+            color of the circles designating the plants.
+        
+        _additive_drawing(bool, optional):
+            Whether the new positions should be drawn over the previous ones.
+            This has an effect only if a figure is provided via _fig.
+        
+        _save (bool, optional):
+            Whether to save the plot as an image. Set to True to save; False to
+            NOT save.
+        
+        _save_name (string, optional):
+            The name of the image of the plot in case we are saving it.
+        
+        Returns:
+            The matplotlib.pyplot.figure on which the adjusted plant positions
+            were drawn. If the parameter _fig was given, then it returns it.
+            Otherwise, it is the newly created figure in this method that is
+            returned.
         """
-        if (_ax == None):
-            fig, ax = plt.subplots(1)
+        
+        if (_fig == None):
+            fig = plt.figure(figsize=(5,5),dpi=300)
+            ax = fig.add_subplot(111)
             ax.imshow(self.OTSU_img_array)
         else:
-            ax = _ax
+            fig = _fig
+            ax = _fig.get_axes()[0]
+            if (not _additive_drawing):
+                ax.patches = []#clearing previous positions
         
         for [x,y] in self.corrected_adjusted_plant_positions:
             circle = patches.Circle((x,y),
@@ -1343,28 +1419,11 @@ class Simulation_MAS(object):
                                     edgecolor = None,
                                     facecolor = _color)
             ax.add_patch(circle)
-    
-    def Show_Adjusted_And_RALs_positions(self,
-                                        _recorded_position_indeces = -1,
-                                        _colors_recorded = 'g',
-                                        _color_adjusted = "r",
-                                        _save=False,
-                                        _save_name=""):
-        
-        fig = plt.figure(figsize=(5,5),dpi=300)
-        ax = fig.add_subplot(111)
-        ax.imshow(self.OTSU_img_array)
-        
-        self.Show_RALs_Position(_ax = ax,
-                                _color = _colors_recorded)
-# =============================================================================
-#         self.Show_Adjusted_Positions(_ax = ax,
-#                                      _color = _color_adjusted)
-# =============================================================================
         
         if (_save):
             fig.savefig(self.follow_simulation_save_path+"/"+_save_name)
-            plt.close()
+        
+        return fig
     
     def Show_RALs_Deicision_Scores(self):
         """
