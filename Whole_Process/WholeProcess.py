@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 
-os.chdir("../Pre_Treatments")
+sys.path.append(os.path.abspath("../Pre_Treatments"))
 import Process_image_for_FT as PiFT
 
-os.chdir("../Fourier")
+sys.path.append(os.path.abspath("../Fourier"))
 import FrequencyAnalysis as FA
 
 os.chdir("../MAS")

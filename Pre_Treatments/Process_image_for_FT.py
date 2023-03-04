@@ -45,17 +45,19 @@ variables the user can change:
 """
 
 import os
+import importlib
+import sys
 
-os.chdir("../Utility")
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
-os.chdir("../Segmentation_Otsu")
+sys.path.append(os.path.abspath("../Segmentation_Otsu"))
 import data
 
-os.chdir("../BSAS")
+sys.path.append(os.path.abspath("../BSAS"))
 import bsas
 
-os.chdir("../Crops_Rows_Angle_Detection")
+sys.path.append(os.path.abspath("../Crops_Rows_Angle_Detection"))
 import CRAD
 
 os.chdir("../Labels_Processing")
@@ -80,7 +82,7 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
 # =============================================================================
 # Images Definition
 # =============================================================================
-    list_images = os.listdir(_path_input_rgb_img)
+    list_images = gIO.listdir_nohidden(_path_input_rgb_img)
     list_images_id = [img_name.split('.')[0] for img_name in list_images]
     nb_images = len(list_images)
     

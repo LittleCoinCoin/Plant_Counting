@@ -1,11 +1,14 @@
 # Instructions
 
 ## Dependencies 
+Here are some special dependencies that are typically not included by default in Anaconda.
 - [Pillow](https://anaconda.org/anaconda/pillow)
 - [PyClustering](https://anaconda.org/conda-forge/pyclustering)
 - [Scikit Learn](https://anaconda.org/anaconda/scikit-learn)
 - [Scikit Image](https://anaconda.org/anaconda/scikit-image)
 - [OpenCV](https://anaconda.org/conda-forge/opencv)
+
+The full list of requirements is availalble [here]("https://github.com/LittleCoinCoin/Plant_Counting/blob/Release/requirements.txt") (hanks to @ef1rspb in [#2](https://github.com/LittleCoinCoin/Plant_Counting/pull/2)). It can be installed via: `pip3 install -r ./requirements.txt`
 
 ## Description
 This tutorial is based on the dummy images you may find in */Data/Non-Labelled/Set1*.
@@ -56,9 +59,42 @@ During this step, the Multi-Agents System is initialized based on the approximat
 Should the detection results be very bad for your own set of images, please start by altering the parameter 
 *_RAs_group_size* ([doc](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Documentation/MAS/Multi_Images_Simulation_v12bis.md)).
 
-The results are in the folder */Output_Meta_Simulation*. The file **MetaSimulationResults_\*** summarizes the 
-detection results. The variable *_NB_RALs_* correspond to the number of plants. You can have access to the positions
-of the plants per crop row in json files In the folder */RALs_NestedPositions_\**.
+### Results files 
+The results are in the folder */Output_Meta_Simulation*.
+- The file **MetaSimulationResults_\*** summarizes the detection results. It is a json file which you can open with [general_IO.ReadJson()](https://github.com/LittleCoinCoin/Plant_Counting/blob/Release/Utility/general_IO.py#L145)( `general_IO.ReadJson()` returns a dictionary). The json has the name of the source rgb image for key and the simulation data as value. The structure is as follow: 
+    ```
+    {
+        name_of_rgb_source_image:
+        {
+            "Time_per_steps": list[float] if the time in second that each step took,
+            "Time_per_steps_detailes": list[list[float]]. For each step, we record the time taken by specific parts of the code,
+            "Image_Labelled": bool. True if the user ran themethod on synthetic data or labelled images; false otherwise.
+            "NB_labelled_plants": int. The real number of plants on the image if it was labelled.
+            "NB_RALs": int. the number of plants detected by the method
+            "TP": int. True Positives. Only if the user ran the method on synthetic data or labelled images. 0 by default.
+            "FN": int. False Negatives. Only if the user ran the method on synthetic data or labelled images. 0 by default.
+            "FP": int. False Positives. Only if the user ran the method on synthetic data or labelled images. 0 by default.
+            "InterPlantDistance": int. The estimated inter-plant distance in pixel.
+            "RAL_Fuse_Factor": float. This is the parameter of the same name in the simulation.
+            "RALs_fill_factor": float. This is the parameter of the same name in the simulation.
+            "RALs_recorded_count": list[int]. The number of plants at each step of the simulation.
+        }
+    }
+    ```
+
+- In the folder */RALs_NestedPositions_\**, you can find one json file per image. Each file stores the positions of the plants per crop row. The file do not contain any key fields, is directly stores the list of positions. Same as above, the file can be opened using [general_IO.ReadJson()](https://github.com/LittleCoinCoin/Plant_Counting/blob/Release/Utility/general_IO.py#L145).  The structure is as follow:
+    ```
+    list_Root[
+        ...,
+        list_CropRow_i[
+            ...
+            list_PlantCoord_j[float_X, float_Y],
+            ...
+            ],
+        ...
+        ]
+    ```
+
 
 ## Runing the MAS on a single image
 It is possible to run the Multi-Agents System on a single image to visualize the positions of the plant agents.
@@ -73,7 +109,7 @@ and Fourier Analysis steps must have been performed before trying to run *Single
 Indeed, the vertically adjusted Otsu images (in folder */Otsu_R*) and the predictions of the Fourier Analysis
 (in folder */Plant_FT_Predictions*) should exist for the MAS to run.
 
-Sometimes, datasets are quite large so, to avoid loading the whole image dataset, it is possible to limit the loeading
+Sometimes, datasets are quite large so, to avoid loading the whole image dataset, it is possible to limit the loading
 to the k first images. This can be set with the parameter *subset_size*.
 
 Every parameter of the MAS can be changed with the variables *RAs_group_size*, *RAs_group_steps*, *Simulation_steps*,
@@ -81,5 +117,4 @@ Every parameter of the MAS can be changed with the variables *RAs_group_size*, *
 
 You can specify which image you want to run the MAS on with the vairable "_image_index" (starts at 0).
 
-The function *MAS_Simulation.Show_RALs_Position(_recorded_position_indeces=[-1], _colors=['g'])* at the end of the script will
-generate a plot with the position of the plant agents as green squares centered.
+The function *MAS_Simulation.Show_RALs_Position(_recorded_position_indeces=[-1], _colors=['g'])* at the end of the script will generate a plot with the position of the plant agents as green squares.

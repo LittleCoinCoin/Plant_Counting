@@ -142,7 +142,7 @@ class Data:
 
         self.mask_Otsu = o.segmentation_otsu(self.image_ExG, start_threshold)
         #conversion en noir et blanc :
-        self.mask_Otsu=np.where(self.mask_Otsu<=200, 0, 255)
+        self.mask_Otsu=np.where(self.mask_Otsu<=200, 0, 255).astype(np.uint8)
     
        
     def create_maskfusion(self):
