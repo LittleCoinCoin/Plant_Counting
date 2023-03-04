@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import json
 import numpy as np
 from PIL import Image
 
 import MAS
+
+sys.path.append(os.path.abspath("../Utility"))
+import general_IO as gIO
 
 
 # =============================================================================
@@ -45,9 +49,9 @@ path_input_raw = path_input_root+"/Data/Labelled/Set3/Processed/Field_0/GrowthSt
 path_input_OTSU = path_input_root+"/Output_General/Set3/Output/Session_{0}/Otsu_R".format(session_number)
 path_input_PLANT_FT_PRED = path_input_root+"/Output_General/Set3/Output_FA/Session_{0}/Plant_FT_Predictions".format(session_number)
 
-names_input_raw = os.listdir(path_input_raw)
-names_input_OTSU = os.listdir(path_input_OTSU)
-names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
+names_input_raw = gIO.listdir_nohidden(path_input_raw)
+names_input_OTSU = gIO.listdir_nohidden(path_input_OTSU)
+names_input_PLANT_FT_PRED = gIO.listdir_nohidden(path_input_PLANT_FT_PRED)
 
 
 # =============================================================================
@@ -69,7 +73,7 @@ data_input_PLANT_FT_PRED = import_data(path_input_PLANT_FT_PRED,
 
 if (labelled_image):
     path_input_adjusted_position_files = path_input_root+"/Output_General/Set3/Output/Session_{0}/Adjusted_Position_Files".format(session_number)
-    names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
+    names_input_adjusted_position_files = gIO.listdir_nohidden(path_input_adjusted_position_files)
     data_adjusted_position_files = import_data(path_input_adjusted_position_files,
                                            names_input_adjusted_position_files[:subset_size],
                                            get_json_file_content)

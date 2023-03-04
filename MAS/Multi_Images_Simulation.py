@@ -55,10 +55,10 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # Files Names Collection
     # =============================================================================
     
-    names_input_raw = os.listdir(_path_input_rgb_img)
+    names_input_raw = gIO.listdir_nohidden(_path_input_rgb_img)
     #
-    names_input_OTSU = os.listdir(path_input_OTSU)
-    names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
+    names_input_OTSU = gIO.listdir_nohidden(path_input_OTSU)
+    names_input_PLANT_FT_PRED = gIO.listdir_nohidden(path_input_PLANT_FT_PRED)
     
     # =============================================================================
     # Data Collection
@@ -74,7 +74,7 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     if (_labelled_images):
         path_input_adjusted_position_files = _path_PreTreatment_and_FA+ \
                                                 "/Output/Session_"+str(_session_number)+"/Adjusted_Position_Files"
-        names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
+        names_input_adjusted_position_files = gIO.listdir_nohidden(path_input_adjusted_position_files)
         data_adjusted_position_files = import_data(path_input_adjusted_position_files,
                                                names_input_adjusted_position_files,
                                                get_json_file_content)
