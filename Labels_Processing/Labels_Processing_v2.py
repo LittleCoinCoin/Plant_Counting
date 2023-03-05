@@ -109,8 +109,9 @@ def Produce_Adjusted_Position_Files( _path_position_file,
         #print(_adjusted_pos)
         
         gIO.check_make_directory(_path_adjusted_position_files)
-        gIO.WriteJson(_path_adjusted_position_files, 
-                      "Adjusted_plant_positions_"+_list_rgb_images[i].split(".")[0],
+        gIO.write_json(_path_adjusted_position_files, 
+                      "Adjusted_plant_positions_"+_list_rgb_images[i].split(".")[0]+
+                      ".json",
                       _adjusted_pos)
 # =============================================================================
 #         plt.figure()
@@ -122,10 +123,10 @@ def Compute_Pixels_In_Plant_Bounding_Boxes(_path_input_position_files,
                                           _path_output_files,
                                           _path_input_Support_Images):
     
-    _list_support_images = os.listdir(_path_input_Support_Images)
+    _list_support_images = gIO.listdir_nohidden(_path_input_Support_Images)
     nb_imgs = len(_list_support_images)
     
-    _list_position_files = os.listdir(_path_input_position_files)
+    _list_position_files = gIO.listdir_nohidden(_path_input_position_files)
     nb_pos_files = len(_list_position_files)
     
     print(_list_position_files, _list_support_images)
@@ -537,4 +538,4 @@ if (__name__ == "__main__"):
                                             gs_path+"/Positions",
                                             80,
                                             gs_path+"/RGB",
-                                            os.listdir(gs_path+"/RGB"))
+                                            gIO.listdir_nohidden(gs_path+"/RGB"))

@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import time
-import json
 import sys
 from sklearn.cluster import KMeans
 from scipy.stats import ttest_ind
@@ -1819,21 +1818,17 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         meta_simulation_results dictionary as a JSON file.
         """
-        name = self.Make_File_Name("MetaSimulationResults_v16_"+self.simu_name)
-        
-        file = open(self.path_output+"/"+name+".json", "w")
-        json.dump(self.meta_simulation_results, file, indent = 3)
-        file.close()
+        name = self.Make_File_Name("MetaSimulationResults_"+self.simu_name)
+        gIO.write_json(self.path_output, name+".json", self.meta_simulation_results, 3 )
+
     
     def Save_RALs_Infos(self):
         """
         saves the results of the MAS simulations stored in the 
         meta_simulation_results dictionary as a JSON file.
         """
-        name = self.Make_File_Name("RALs_Infos_v16_"+self.simu_name)
-        file = open(self.path_output+"/"+name+".json", "w")
-        json.dump(self.RALs_data, file, indent = 2)
-        file.close()
+        name = self.Make_File_Name("RALs_Infos_"+self.simu_name)
+        gIO.write_json(self.path_output, name+".json", self.RALs_data, 2 )
     
     def Save_RALs_Nested_Positions(self):
         """
@@ -1841,15 +1836,13 @@ class MetaSimulation(object):
         image. The json file is in the exact same format as The plant predictions
         on
         """
-        name = self.Make_File_Name("RALs_NestedPositions_v16_"+self.simu_name)
+        name = self.Make_File_Name("RALs_NestedPositions_"+self.simu_name)
         _path=self.path_output+"/"+name
         gIO.check_make_directory(_path)
         counter = 0
         for _nested_pos in self.RALs_all_nested_positions:
-            name = self.names_input_raw[counter]+"NestedPositions"
-            file = open(_path+"/"+name+".json", "w")
-            json.dump(_nested_pos, file, indent = 2)
-            file.close()
+            name = self.names_input_raw[counter].split(".")[0]
+            gIO.write_json(_path, name+".json", _nested_pos, 2 )
             counter+=1
     
     def Save_Whole_Field_Results(self):
@@ -1857,12 +1850,10 @@ class MetaSimulation(object):
         saves the results of the MAS simulations stored in the 
         whole_field_counted_plants dictionary as a JSON file.
         """
-        name = self.Make_File_Name("WholeFieldResults_v16_"+self.simu_name)
-        file = open(self.path_output+"/"+name+".json", "w")
-        json.dump(self.whole_field_counted_plants, file, indent = 2)
-        file.close()
+        name = self.Make_File_Name("WholeFieldResults_"+self.simu_name)
+        gIO.write_json(self.path_output, name+".json", self.whole_field_counted_plants, 2 )
     
     def Save_Log(self):
-        name = self.Make_File_Name("LOG_MetaSimulationResults_v16_"+self.simu_name)
+        name = self.Make_File_Name("LOG_MetaSimulationResults_"+self.simu_name)
         gIO.writer(self.path_output, name+".txt", self.log, True, True)
         

@@ -29,22 +29,6 @@ sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
 # =============================================================================
-# Utility Functions Definition
-# =============================================================================
-def import_data(_path, _file_names, _import_function):
-    data = []
-    for _n in _file_names:
-        data += [_import_function(_path + "/" + _n)]
-    return data
-
-def get_file_lines(path_csv_file):
-    file_object = open(path_csv_file, 'r')
-    file_content = file_object.readlines()
-    file_object.close()
-    return(file_content)
-
-
-# =============================================================================
 # Specific Function Definition
 # =============================================================================
 
@@ -224,13 +208,13 @@ def All_Fourier_Analysis(_path_input_output,
     subset_size = 4
     
 ################## Import Data
-    data_bsas_dir0 = import_data(path_input_bsas_dir0,
-                                 names_input_bsas_dir0[:subset_size],
-                                 get_file_lines)
+    data_bsas_dir0 = gIO.multi_read(path_input_bsas_dir0,
+                                    names_input_bsas_dir0[:subset_size],
+                                    gIO.read)
     
-    data_bsas_dir1 = import_data(path_input_bsas_dir1,
-                                 names_input_bsas_dir1[:subset_size],
-                                 get_file_lines)
+    data_bsas_dir1 = gIO.multi_read(path_input_bsas_dir1,
+                                    names_input_bsas_dir1[:subset_size],
+                                    gIO.read)
     
     nb_images = len(data_bsas_dir0)
     
@@ -294,7 +278,7 @@ def All_Fourier_Analysis(_path_input_output,
         
 ################## Save the predictions in json file
         _file_name="PredictedRows_Img_"+str(i)+"_"+str(nb_predictions)
-        gIO.WriteJson(path_output_FT_predictions, _file_name, predicted_FT)
+        gIO.write_json(path_output_FT_predictions, _file_name+".json", predicted_FT)
 
 
 
