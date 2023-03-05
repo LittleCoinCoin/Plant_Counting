@@ -60,7 +60,7 @@ print("Done")
 # Multi-Agents System
 RAs_group_size = 20
 RAs_group_steps = 2
-Search_Simulation_steps = 1
+Search_Simulation_steps = 50
 
 RALs_fuse_factor = 0.5
 RALs_fill_factor = 1.5
