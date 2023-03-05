@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import os
-import json
+import sys
 import numpy as np
 from PIL import Image
 
 import MAS
 
-os.chdir("../Utility")
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
 
