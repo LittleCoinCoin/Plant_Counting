@@ -2,37 +2,10 @@
 
 import os
 import sys
-import numpy as np
-from PIL import Image
-
 import MAS
 
 sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
-
-
-# =============================================================================
-# Utility Functions Definition
-# =============================================================================
-def import_data(_path, _file_names, _import_function):
-    data = []
-    for _n in _file_names:
-        data += [_import_function(_path + "/" + _n)]
-    return data
-
-def get_json_file_content(_path_json_file):
-    f = open(_path_json_file)
-    return json.load(f)
-
-def get_img_array(path_img):
-    img = Image.open(path_img)
-    return np.array(img)
-
-def get_file_lines(path_csv_file):
-    file_object = open(path_csv_file, 'r')
-    file_content = file_object.readlines()
-    file_object.close()
-    return(file_content)
 
 def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
                     _labelled_images = False,
@@ -43,7 +16,7 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # =============================================================================
     # General Path Definition
     # =============================================================================
-    #
+    
     path_input_OTSU = _path_PreTreatment_and_FA+"/Output/Session_"+str(_session_number)+"/Otsu_R"
     
     path_input_PLANT_FT_PRED = _path_PreTreatment_and_FA+"/Output_FA/Session_"+str(_session_number)+"/Plant_FT_Predictions"
@@ -65,19 +38,19 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # =============================================================================
     print("Data Collection...", end = " ")
     
-    data_input_raw = import_data(_path_input_rgb_img, names_input_raw, get_img_array)
-    data_input_OTSU = import_data(path_input_OTSU, names_input_OTSU, get_img_array)
-    data_input_PLANT_FT_PRED = import_data(path_input_PLANT_FT_PRED,
+    data_input_raw = gIO.multi_read(_path_input_rgb_img, names_input_raw, gIO.read_img)
+    data_input_OTSU = gIO.multi_read(path_input_OTSU, names_input_OTSU, gIO.read_img)
+    data_input_PLANT_FT_PRED = gIO.multi_read(path_input_PLANT_FT_PRED,
                                            names_input_PLANT_FT_PRED,
-                                           get_json_file_content)
+                                           gIO.read_json)
     
     if (_labelled_images):
         path_input_adjusted_position_files = _path_PreTreatment_and_FA+ \
                                                 "/Output/Session_"+str(_session_number)+"/Adjusted_Position_Files"
         names_input_adjusted_position_files = gIO.listdir_nohidden(path_input_adjusted_position_files)
-        data_adjusted_position_files = import_data(path_input_adjusted_position_files,
+        data_adjusted_position_files = gIO.multi_read(path_input_adjusted_position_files,
                                                names_input_adjusted_position_files,
-                                               get_json_file_content)
+                                               gIO.read_json)
     else:
         data_adjusted_position_files = None
     

@@ -110,7 +110,7 @@ def Process_UP_Json_Output(_path_source,
 
 def Extract_Files_With_Prefix(_path, _prefix):
     
-    all_file_names = os.listdir(_path)
+    all_file_names = gIO.listdir_nohidden(_path)
     prefix_length = len(_prefix)
     
     all_files_content = []

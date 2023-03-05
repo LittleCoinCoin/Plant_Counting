@@ -2,38 +2,11 @@
 
 import os
 import sys
-import json
-import numpy as np
-from PIL import Image
 
 import MAS
 
 sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
-
-
-# =============================================================================
-# Utility Functions Definition
-# =============================================================================
-def import_data(_path, _file_names, _import_function):
-    data = []
-    for _n in _file_names:
-        data += [_import_function(_path + "/" + _n)]
-    return data
-
-def get_json_file_content(_path_json_file):
-    f = open(_path_json_file)
-    return json.load(f)
-
-def get_img_array(path_img):
-    img = Image.open(path_img)
-    return np.array(img)
-
-def get_file_lines(path_csv_file):
-    file_object = open(path_csv_file, 'r')
-    file_content = file_object.readlines()
-    file_object.close()
-    return(file_content)
     
 # =============================================================================
 # General Path Definition
@@ -61,22 +34,22 @@ print("Data Collection...", end = " ")
 
 subset_size = 8
 
-data_input_raw = import_data(path_input_raw,
-                             names_input_raw[:subset_size],
-                             get_img_array)
-data_input_OTSU = import_data(path_input_OTSU,
-                              names_input_OTSU[:subset_size],
-                              get_img_array)
-data_input_PLANT_FT_PRED = import_data(path_input_PLANT_FT_PRED,
-                                       names_input_PLANT_FT_PRED[:subset_size],
-                                       get_json_file_content)
+data_input_raw = gIO.multi_read(path_input_raw,
+                                names_input_raw[:subset_size],
+                                gIO.read_img)
+data_input_OTSU = gIO.multi_read(path_input_OTSU,
+                                 names_input_OTSU[:subset_size],
+                                 gIO.read_img)
+data_input_PLANT_FT_PRED = gIO.multi_read(path_input_PLANT_FT_PRED,
+                                          names_input_PLANT_FT_PRED[:subset_size],
+                                          gIO.read_json)
 
 if (labelled_image):
     path_input_adjusted_position_files = path_input_root+"/Output_General/Set3/Output/Session_{0}/Adjusted_Position_Files".format(session_number)
     names_input_adjusted_position_files = gIO.listdir_nohidden(path_input_adjusted_position_files)
-    data_adjusted_position_files = import_data(path_input_adjusted_position_files,
-                                           names_input_adjusted_position_files[:subset_size],
-                                           get_json_file_content)
+    data_adjusted_position_files = gIO.multi_read(path_input_adjusted_position_files,
+                                                  names_input_adjusted_position_files[:subset_size],
+                                                  gIO.read_json)
 
 print("Done")
 
