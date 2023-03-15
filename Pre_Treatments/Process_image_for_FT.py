@@ -60,7 +60,7 @@ import bsas
 sys.path.append(os.path.abspath("../Crops_Rows_Angle_Detection"))
 import CRAD
 
-os.chdir("../Labels_Processing")
+sys.path.append(os.path.abspath("../Labels_Processing"))
 import Labels_Processing_v2 as LblP
     
 
