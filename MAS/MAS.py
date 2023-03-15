@@ -1410,7 +1410,7 @@ class Simulation_MAS(object):
             fig = _fig
             ax = _fig.get_axes()[0]
             if (not _additive_drawing):
-                ax.patches = []#clearing previous positions
+                [p.remove() for p in reversed(ax.patches)] #clearing previous positions
         
         for [x,y] in self.corrected_adjusted_plant_positions:
             circle = patches.Circle((x,y),
