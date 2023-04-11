@@ -8,7 +8,7 @@ Here are some special dependencies that are typically not included by default in
 - [Scikit Image](https://anaconda.org/anaconda/scikit-image)
 - [OpenCV](https://anaconda.org/conda-forge/opencv)
 
-The full list of requirements is availalble [here]("https://github.com/LittleCoinCoin/Plant_Counting/blob/Release/requirements.txt") (hanks to @ef1rspb in [#2](https://github.com/LittleCoinCoin/Plant_Counting/pull/2)). It can be installed via: `pip3 install -r ./requirements.txt`
+The full list of requirements is availalble [here]("https://github.com/LittleCoinCoin/Plant_Counting/blob/Release/requirements.txt") (thanks to @ef1rspb in [#2](https://github.com/LittleCoinCoin/Plant_Counting/pull/2)). It can be installed via: `pip3 install -r ./requirements.txt`
 
 ## Datasets
 Some sample data is available in the folders */Data/Non-Labelled/* and */Data/Labelled*. There are two sets (*Set 1* and *Set 2*) for the non-labelled data and one for the labelled data (*Set 3*). Results of the method for *Set 1* and *3* are available for your consultation in */Output_General*.
