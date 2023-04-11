@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct  5 09:37:36 2020
-
-@author: eliot
-
 goal:
     - Approximation of the position of the plants positions thanks to Fourier Analysis
 Method
@@ -31,22 +27,6 @@ import numpy as np
 
 sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
-
-# =============================================================================
-# Utility Functions Definition
-# =============================================================================
-def import_data(_path, _file_names, _import_function):
-    data = []
-    for _n in _file_names:
-        data += [_import_function(_path + "/" + _n)]
-    return data
-
-def get_file_lines(path_csv_file):
-    file_object = open(path_csv_file, 'r')
-    file_content = file_object.readlines()
-    file_object.close()
-    return(file_content)
-
 
 # =============================================================================
 # Specific Function Definition
@@ -228,13 +208,13 @@ def All_Fourier_Analysis(_path_input_output,
     subset_size = 4
     
 ################## Import Data
-    data_bsas_dir0 = import_data(path_input_bsas_dir0,
-                                 names_input_bsas_dir0[:subset_size],
-                                 get_file_lines)
+    data_bsas_dir0 = gIO.multi_read(path_input_bsas_dir0,
+                                    names_input_bsas_dir0[:subset_size],
+                                    gIO.read)
     
-    data_bsas_dir1 = import_data(path_input_bsas_dir1,
-                                 names_input_bsas_dir1[:subset_size],
-                                 get_file_lines)
+    data_bsas_dir1 = gIO.multi_read(path_input_bsas_dir1,
+                                    names_input_bsas_dir1[:subset_size],
+                                    gIO.read)
     
     nb_images = len(data_bsas_dir0)
     
@@ -298,7 +278,7 @@ def All_Fourier_Analysis(_path_input_output,
         
 ################## Save the predictions in json file
         _file_name="PredictedRows_Img_"+str(i)+"_"+str(nb_predictions)
-        gIO.WriteJson(path_output_FT_predictions, _file_name, predicted_FT)
+        gIO.write_json(path_output_FT_predictions, _file_name+".json", predicted_FT)
 
 
 
@@ -308,7 +288,14 @@ def All_Fourier_Analysis(_path_input_output,
 # =============================================================================
 
 if (__name__ == "__main__"):
+# ========================== FOR NON-LABELLED IMAGES ======================== #
+# =============================================================================
+#     All_Fourier_Analysis(_path_input_output="../Tutorial/Output_General/Set1",
+#                          _session_number=1,
+#                          _bin_div_X=2, _bin_div_Y=4)
+# =============================================================================
     
-    All_Fourier_Analysis(_path_input_output="../Tutorial/Output_General/Set1",
+# ========================== FOR LABELLED IMAGES ============================ #
+    All_Fourier_Analysis(_path_input_output="../Tutorial/Output_General/Set3",
                          _session_number=1,
                          _bin_div_X=2, _bin_div_Y=4)

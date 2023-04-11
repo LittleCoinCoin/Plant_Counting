@@ -1,0 +1,55 @@
+{
+  "version": "0.0.1",
+  "annotation_definitions": [
+    {
+      "id": "f9f22e05-443f-4602-a422-ebe4ea9b55cb",
+      "name": "bounding box",
+      "description": "Bounding box for each labeled object visible to the sensor",
+      "format": "json",
+      "spec": [
+        {
+          "label_id": 1,
+          "label_name": "Plant_A2"
+        },
+        {
+          "label_id": 2,
+          "label_name": "Plant_B1"
+        },
+        {
+          "label_id": 3,
+          "label_name": "Plant_B3B4"
+        },
+        {
+          "label_id": 4,
+          "label_name": "Plant_D1"
+        },
+        {
+          "label_id": 5,
+          "label_name": "Plant_D2"
+        },
+        {
+          "label_id": 6,
+          "label_name": "Plant_D3"
+        },
+        {
+          "label_id": 7,
+          "label_name": "Plant_E1"
+        },
+        {
+          "label_id": 8,
+          "label_name": "Plant_F3"
+        },
+        {
+          "label_id": 9,
+          "label_name": "Weed"
+        }
+      ]
+    },
+    {
+      "id": "c0b4a22c-0420-4d9f-bafc-954b8f7b35a7",
+      "name": "View_Port_Position",
+      "description": "The position relative to the screen",
+      "format": "json"
+    }
+  ]
+}

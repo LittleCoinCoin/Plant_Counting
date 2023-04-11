@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat May 23 11:55:31 2020
-
-@author: eliot
-
 goals:
     - Performs the pre-treatments on the images
     - Applies the Otsu Segmentation to transform and RGB image to an White and 
@@ -64,8 +60,12 @@ import bsas
 sys.path.append(os.path.abspath("../Crops_Rows_Angle_Detection"))
 import CRAD
 
+sys.path.append(os.path.abspath("../Labels_Processing"))
+import Labels_Processing_v2 as LblP
+    
 
 def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
+                      _path_position_files = None, _rows_real_angle = 0,
                       _make_unique_folder_per_session=True, _session=1,
                       _do_Otsu=True, _do_AD=True,
                       _save_AD_score_images=False, _save_BSAS_images=False,
@@ -109,7 +109,6 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
     path_output_ADp = path_output + "/ADp" + "/" + str(_bsas_threshold)
     path_output_ADp_angle_search_score = path_output_ADp + "/Output_AngleScore"
     path_output_ADp_Images = path_output_ADp + "/Output_Images"
-    
     gIO.check_make_directory(path_output_ADp_angle_search_score)
     gIO.check_make_directory(path_output_ADp_Images)
     
@@ -173,12 +172,43 @@ def All_Pre_Treatment(_path_input_rgb_img, _path_output_root,
                 if (_save_BSAS_images):
                     bsp1.save_BSASmap(path_output_BSAS_images_R[k])
             i+=1
+            
+# =============================================================================
+# If we have the positions of the plants, We rotate the real positions of the
+# plants according ot the real angle.
+# This is equivalent to say that the images are labelled
+# We need the position_files somewhere and Inidicate it in the _path_labelled_position
+# =============================================================================
+    if (_path_position_files!=None):
+        print("in")
+        path_output_adjusted_position_files = path_output + "/Adjusted_Position_Files"
+        gIO.check_make_directory(path_output_adjusted_position_files)
+        
+        LblP.Produce_Adjusted_Position_Files(_path_position_files,
+                                             path_output_adjusted_position_files,
+                                             _rows_real_angle,
+                                             _path_input_rgb_img,
+                                             list_images)
 
 if (__name__=="__main__"):
+
+# ========================== FOR NON-LABELLED IMAGES ======================== #
+# =============================================================================
+#   All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
+#                   _path_output_root="../Tutorial/Output_General/Set1",
+#                   _path_position_files=None,
+#                   _make_unique_folder_per_session=False, _session=1,
+#                   _do_Otsu=True, _do_AD=True,
+#                   _save_AD_score_images=False, _save_BSAS_images=False,
+#                   _bsas_threshold=1)
+# =============================================================================
     
-    All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Non-Labelled/Set1",
-                      _path_output_root="../Tutorial/Output_General/Set1",
-                      _make_unique_folder_per_session=True, _session=1,
+# ========================== FOR LABELLED IMAGES ============================ #
+    All_Pre_Treatment(_path_input_rgb_img="../Tutorial/Data/Labelled/Set3/Processed/Field_0/GrowthStage_0/RGB",
+                      _path_output_root="../Tutorial/Output_General/Set3",
+                      _path_position_files="../Tutorial/Data/Labelled/Set3/Processed/Field_0/GrowthStage_0/Dataset",
+                      _rows_real_angle=80,
+                      _make_unique_folder_per_session=False, _session=1,
                       _do_Otsu=True, _do_AD=True,
                       _save_AD_score_images=False, _save_BSAS_images=False,
                       _bsas_threshold=1)

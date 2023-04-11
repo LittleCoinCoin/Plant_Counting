@@ -9,6 +9,7 @@ Created on Thu Mar 28 14:27:00 2019
 import os
 import re
 import json
+from numpy import array as npar
 from PIL import Image
 
 ###############################################################################
@@ -16,17 +17,18 @@ from PIL import Image
 #                       GENERAL Input/Output FUNCTIONS
 #
 ###############################################################################    
-def reader(_path, _file_name):
+def read(_path, _file_name):
     """
-    Basic reading function.s    
+    Reads the file line by line.
     
     _path (string):
-        path pointing to the directory where _file_name is. Relative paths are working.
+        path pointing to the directory where _file_name is. Relative paths ar
+        working.
     
     _file_name (string):
         name of the file (with the extension) to be read
     
-    Returns the content of /_path/_file_name as a list
+    Returns the lines of /_path/_file_name as a list
     """
     file_object = open(_path+"/"+_file_name, 'r')
     
@@ -34,6 +36,23 @@ def reader(_path, _file_name):
     file_object.close()
     
     return(file_content)
+
+def multi_read(_path, _file_names, _read_function):
+    """
+    Applies _read_function to all _files_names at _path. Effectively imports
+    all data contained in the _files_names if the _read_function could parse
+    them.
+    
+    _path (string):
+        path pointing to the directory where all _file_names are. Relative
+        paths are working.
+    
+    _file_names (List of string):
+        names of the files (with the extension) to be read.
+    
+    Returns the data of the files as a list.
+    """
+    return [_read_function(_path, _n) for _n in _file_names]
 
 def read_column(_path, _file_name, _cols, _sep = "\s+"):
     
@@ -124,23 +143,22 @@ def writer(_path, _file_name, _content, _overwrite = False, _print_file_status =
             if (_print_file_status):
                 print ("File {0} already exists in directory {1} and overwrite is set to False".format(_file_name, _path))
 
-def WriteJson(_path, _file_name, _content, _indent=1):
+
+def read_img(_path, _file_name):
     """
-    Uses the Json library to condense a bit the steps to write a json file
+    Attempts to open the file as an image using PIL.IMage.open().
     
     _path (string):
-        path pointing toward the directory where we want to write _file_name.
-        Relative paths are working
+        path pointing to the directory where _file_name is. Relative paths are
+        working.
     
     _file_name (string):
-        name of the file (WITHOUT the .json extension) to be written
-        
-    _content (dict):
-        content that we want to write in /_path/_file_name
+        name of the file (with the extension) to be read
+    
+    Returns the image of /_path/_file_name as a numpy.array.
     """
-    file = open(_path+"/"+_file_name+".json", "w")
-    json.dump(_content, file, indent = _indent)
-    file.close()
+    img = Image.open(_path+"/"+_file_name)
+    return npar(img)
 
 def ReadJson(_path, _file_name):
     """
@@ -205,8 +223,7 @@ def copier(_path, _file_name, _new_path, _new_file_name, _overwrite = False):
             print("File {0} was successfully copied (and overwritten) in {1}".format(_new_file_name, _new_path))
         
         else:
-            print ("File {0} already exists in directory {1} and overwrite is set to False".format(_new_file_name, _new_path))    
-    
+            print ("File {0} already exists in directory {1} and overwrite is set to False".format(_new_file_name, _new_path))        
 
 def concatener(_path, _file_name, _path_files_to_concatenate, _files_to_concatenate, _overwrite = False):
     
@@ -312,3 +329,44 @@ def listdir_nohidden(_path):
     Filter hidden files (i.e. .DS_Store on MacOS)
     """
     return [f for f in os.listdir(_path) if not f.startswith('.')]
+
+
+###############################################################################
+#
+#                       Json Input/Output FUNCTIONS
+#
+###############################################################################  
+def write_json(_path, _file_name, _content, _indent=1):
+    """
+    Uses the Json library to condense a bit the steps to write a json file
+    
+    _path (string):
+        path pointing toward the directory where we want to write _file_name.
+        Relative paths are working
+    
+    _file_name (string):
+        name of the file (with the .json extension) to be written
+        
+    _content (dict):
+        content that we want to write in /_path/_file_name
+    """
+    file = open(_path+"/"+_file_name, "w")
+    json.dump(_content, file, indent = _indent)
+    file.close()
+
+def read_json(_path, _file_name):
+    """
+    Uses the Json library to get the data stored in json file as a dictionary
+    
+    _path (string):
+        path pointing to the directory where _file_name is. Relative paths are working
+    
+    _file_name (string):
+        name of the file (with the .json extension) to be read
+        
+    RETURNS the content of _path/_file_name as a dictionary
+    """
+    file = open(_path+"/"+_file_name, "r")
+    res = json.load(file)
+    file.close()
+    return res
