@@ -832,8 +832,20 @@ class Agents_Director(object):
         print("mean_nb_RALs", means_grp)
         
         if (p_value < 0.0001):
+
+            # Find the group with the minimum mean
+            min_mean_group_index = np.argmin(means_grp)
+
+            _indeces_grp0 = np.array(_indeces_grp0)
+            _indeces_grp1 = np.array(_indeces_grp1)
+
+            # Get the indices associated with the group with the minimum mean
+            index_small_grp = list((_indeces_grp0, _indeces_grp1))[min_mean_group_index]
+
+            _indeces_grp0 = tuple(_indeces_grp0)
+            _indeces_grp1 = tuple(_indeces_grp1)
             
-            index_small_grp = list(np.array((_indeces_grp0,_indeces_grp1))[np.where(means_grp == min(means_grp))][0][0])
+            #index_small_grp = list(np.array((_indeces_grp0,_indeces_grp1))[np.where(means_grp == min(means_grp))][0][0])
             print(index_small_grp)
             
             nb_indeces = len(index_small_grp)
@@ -873,6 +885,7 @@ class Agents_Director(object):
                 
             print("Rows to_delete", to_delete)
             nb_to_delete = len(to_delete)
+            to_delete = [item for sublist in to_delete for item in sublist]
             for i in range(nb_to_delete):
                 self.RowAs = self.RowAs[:to_delete[i]-i] + self.RowAs[to_delete[i]-i+1:]
             
