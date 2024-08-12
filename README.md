@@ -17,8 +17,8 @@
 # How to run the code?
 The code is separated in three parts. Supposing that you have an image of a crop field captured by a UAV, 
 the procedure will consist in [Pre-Processing](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Documentation/Pre-Treatments/Process_image_for_FT.md), [Approximation of the Geometry](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Documentation/Fourier/FrequencyAnalysis.md) (Fourier Analysis), [Detection of the
-Plants](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Documentation/MAS/Multi_Images_Simulation_v12bis.md) (with the MAS). It is possible to Rune all three steps in one go with the script named *WholeProcess.py*; or 
-all three steps separately with the scripts *Process_image_for_FT.py*, *FrequencyAnalysis.py* and *Multi_Images_Simulation_v12bis.py*.
+Plants](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Documentation/MAS/Multi_Images_Simulation.md) (with the MAS). It is possible to Rune all three steps in one go with the script named *WholeProcess.py*; or 
+all three steps separately with the scripts *Process_image_for_FT.py*, *FrequencyAnalysis.py* and *Multi_Images_Simulation.py*.
 Further details about each scripts are available in the Documentation.
 A little [tutorial](https://github.com/LittleCoinCoin/Plant_Counting/blob/Pre-Release/Tutorial/Tutorial.md) is available
 
