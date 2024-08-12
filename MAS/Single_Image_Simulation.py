@@ -139,8 +139,5 @@ if (labelled_image):
     print("FP =", MAS_Simulation.FP)
 
 
-# =============================================================================
-# MAS_Simulation.Show_Adjusted_And_RALs_positions()
-# =============================================================================
 MAS_Simulation.Show_nb_RALs()
 #MAS_Simulation.Show_RALs_Deicision_Scores()
