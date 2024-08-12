@@ -29,15 +29,9 @@ def All_Simulations(_path_input_rgb_img, _path_PreTreatment_and_FA,
     # =============================================================================
     
     names_input_raw = gIO.listdir_nohidden(_path_input_rgb_img)
-<<<<<<< HEAD:MAS/Multi_Images_Simulation_v12bis.py
     #names_input_adjusted_position_files = os.listdir(path_input_adjusted_position_files)
     names_input_OTSU = gIO.listdir_nohidden(path_input_OTSU)
     names_input_PLANT_FT_PRED = os.listdir(path_input_PLANT_FT_PRED)
-=======
-    #
-    names_input_OTSU = gIO.listdir_nohidden(path_input_OTSU)
-    names_input_PLANT_FT_PRED = gIO.listdir_nohidden(path_input_PLANT_FT_PRED)
->>>>>>> Pre-Release:MAS/Multi_Images_Simulation.py
     
     # =============================================================================
     # Data Collection
