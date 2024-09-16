@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
+from sklearn.metrics.pairwise import manhattan_distances
 import matplotlib.pyplot as plt
-import concurrent.futures
 
 def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
     subparts = []
@@ -27,35 +27,25 @@ def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
 def ClusterImageSubpart(bound, image, _clusteringAlgorithm, **kwargs):
     print("Processing subpart: ", bound)
     subpart = image[bound[0]:bound[1], bound[2]:bound[3]]
-    # Reshape it to a 1D array
-    reshaped_image = subpart.reshape(-1, 1)
+
+    return ClusterImageWhitePixels(subpart, _clusteringAlgorithm, **kwargs)
+
+def ClusterImageWhitePixels(_image, _clusteringAlgorithm, _whiteLevel = 220, **kwargs):
+
+    # Get positions of the white pixels,
+    white_positions = np.where(_image > _whiteLevel)
+
+    # compute the Manhattan distance matrix between the white pixels
+    print("Computing distance matrix")
+    white_positions_array = np.column_stack(white_positions)
+    distance_matrix = manhattan_distances(white_positions_array)
 
     # Perform clustering (DBSCAN or OPTICS)
-    dbscan = _clusteringAlgorithm(**kwargs)
-    clustering = dbscan.fit(reshaped_image)
+    print("Clustering")
+    dbscan = _clusteringAlgorithm(**kwargs, metric="precomputed")
+    clustering = dbscan.fit(distance_matrix)
 
-    # Reshape the labels back into the original subpart shape
-    clustered_subpart = clustering.labels_.reshape((bound[1] - bound[0], bound[3] - bound[2]))
-
-    # Map the labels to 0 and 1
-    # This is necessary because we have no guarentee the clustering on all subparts will
-    # choose the same labels to describe black or white.
-    # So, being consistent with grayscale color, we set 0 the label for black pixels and
-    # 1 the label for white pixels in the original image
-
-    # first, all the labels bellow 0 are set to 0
-    clustered_subpart[clustered_subpart < 0] = 0
-    # then, all the labels above 0 are set to 1
-    clustered_subpart[clustered_subpart > 0] = 1
-    # get the positions of the labels 0 and -1
-    black_positions = np.where(clustered_subpart == 0)
-    # if the black positions in the original image give white pixels, set them to 1 and vice versa
-    if (image[bound[0]:bound[1], bound[2]:bound[3]][black_positions] > 0).all():
-        white_positions = np.where(clustered_subpart == 1)
-        clustered_subpart[black_positions] = 1
-        clustered_subpart[white_positions] = 0
-
-    return clustered_subpart
+    return (clustering.labels_, white_positions)
 
 def OtsuImagePreprocess(_image_path: str):
     # Load the image
@@ -73,37 +63,34 @@ def ClusteringWorkflow(_image_path: str, _nbWorkers: int, _clusteringAlgorithm, 
     print("===== {} Clustering =====".format(_clusteringAlgorithm))
 
     # Load the image
-    image = OtsuImagePreprocess(_image_path)
+    image = cv2.imread(_image_path)
+    # Keep only the first channel
+    imageC1 = image[:, :, 0]
 
     # Get the bounds of the subparts of the image
-    print("Computing image subparts")
-    bounds = GetImageSubpartBounds(image)
-    nbBounds = len(bounds)
+    #print("Computing image subparts")
+    #bounds = GetImageSubpartBounds(image)
+            
+    (labels, positions) = ClusterImageWhitePixels(imageC1, _clusteringAlgorithm, **kwargs)
 
-    # Create a new image to store the clustered subparts
-    rebuilt_image = np.zeros((image.shape[0], image.shape[1]), dtype=np.int64)
+    # get the unique labels
+    unique_labels = np.unique(labels)
+    print ("Unique labels: ", unique_labels)
 
-    #Process the subparts using multi-processes
-    with concurrent.futures.ProcessPoolExecutor(max_workers = _nbWorkers) as executor:
-        # Submit each subpart to the executor
-        futures = [executor.submit(ClusterImageSubpart, bound, image, _clusteringAlgorithm, **kwargs) for bound in bounds]
-
-        # Get the allSubparts of the tasks
-        allSubparts = [future.result() for future in futures]
-
-        # Rebuild the image from all the processes
-        for i in range(nbBounds):
-            rebuilt_image[bounds[i][0]:bounds[i][1], bounds[i][2]:bounds[i][3]] = allSubparts[i]
-
-    # Display the clustered subpart. Use matplotlib for this
     print("Displaying")
     #create a new figure
     plt.figure()
-    #show the image
-    plt.imshow(rebuilt_image, cmap='viridis', vmin=-1, vmax=1)
+    # get the positions of the clusters
+    for label in unique_labels:
+        labelpos = np.where(labels == label)
+        label_pos_x = positions[0][labelpos]
+        label_pos_y = positions[1][labelpos]
+
+        # show the clusters as scatter points in the original image
+        plt.scatter(label_pos_x, label_pos_y, label=label, s=0.1)
 
 if (__name__ == '__main__'):
     image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
-    ClusteringWorkflow(_image_path=image_path, _nbWorkers=4, _clusteringAlgorithm=OPTICS, eps=3, min_samples=5, metric="manhattan")
+    ClusteringWorkflow(_image_path=image_path, _nbWorkers=4, _clusteringAlgorithm=DBSCAN, eps=3, min_samples=5)
     #OPTICSWorkflow(image_path)
     plt.show()
