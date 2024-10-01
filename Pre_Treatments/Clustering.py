@@ -8,9 +8,10 @@ def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
     subparts = []
     height, width = image.shape[:2]
     for y in range(0, height, _maxHeight):
+        
         maxHeight = _maxHeight
         #If the subpart that is most at the bottom goes over the image height
-        #then we need to adjust the height of the subpart
+        #then we need to adjust the height of the subpart 
         if (y + _maxHeight > height):
             maxHeight = height - y
 
@@ -22,7 +23,7 @@ def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
                 maxWidth = width - x
             subparts.append([y, y+maxHeight, x, x+maxWidth])
 
-    return subparts
+    return subparts    
 
 def ClusterImageSubpart(bound, image, _clusteringAlgorithm, **kwargs):
     print("Processing subpart: ", bound)
@@ -47,19 +48,7 @@ def ClusterImageWhitePixels(_image, _clusteringAlgorithm, _whiteLevel = 220, **k
 
     return (clustering.labels_, white_positions)
 
-def OtsuImagePreprocess(_image_path: str):
-    # Load the image
-    image = cv2.imread(_image_path)
-    # Keep only the first channel
-    image = image[:, :, 0]
-    # All pixel values bellow 220 are set to 0
-    image[image < 220] = 0
-    # All pixel values above 220 are set to 255
-    image[image >= 220] = 255
-
-    return image
-
-def ClusteringWorkflow(_image_path: str, _nbWorkers: int, _clusteringAlgorithm, **kwargs):
+def ClusteringWorkflow(_image_path: str, _clusteringAlgorithm, **kwargs):
     print("===== {} Clustering =====".format(_clusteringAlgorithm))
 
     # Load the image
@@ -96,6 +85,42 @@ def ClusteringWorkflow(_image_path: str, _nbWorkers: int, _clusteringAlgorithm, 
 
         # plot the name of the cluster at the center of the cluster
         plt.text(np.mean(label_pos_x), np.mean(label_pos_y), str(label), fontsize=5, color='black')
+
+# Do a similar thing but with OPTICS
+def OPTICSWorkflow(_image_path: str):
+    print("===== OPTICS Workflow =====")
+
+    # Load the image
+    image = cv2.imread(_image_path)
+
+    # Take a subpart of the image in the center that is 100x100 pixels
+    # This is done to speed up the clustering
+    center_x = image.shape[1] // 2
+    center_y = image.shape[0] // 2
+    subpart = image[center_y - 50:center_y + 50, center_x - 50:center_x + 50]
+    # Keep only the first channel
+    subpart = subpart[:, :, 0]
+    reshaped_image = subpart.reshape(-1, 1)
+    print("subpart: ", subpart)
+
+    # Perform OPTICS clustering
+    print("Performing OPTICS clustering")
+    optics = OPTICS(eps=3, min_samples=5)
+    print("Fitting")
+    clustering = optics.fit(reshaped_image)
+    print("Labels: ", clustering.labels_)
+
+    # Reshape the labels back into the original subpart shape
+    print("Reshaping")
+    clustered_subpart = clustering.labels_.reshape(subpart.shape)
+    print("Clustered subpart: ", clustered_subpart)
+
+    # Display the clustered subpart. Use matplotlib for this
+    print("Displaying")
+    #create a new figure
+    plt.figure()
+    #show the image
+    plt.imshow(clustered_subpart, cmap='viridis')
 
 if (__name__ == '__main__'):
     image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
