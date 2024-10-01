@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
-from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.metrics.pairwise import manhattan_distances, euclidean_distances
 import matplotlib.pyplot as plt
 
 def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
@@ -35,16 +35,32 @@ def ClusterImageWhitePixels(_image, _clusteringAlgorithm, _whiteLevel = 220, **k
 
     # Get positions of the white pixels,
     white_positions = np.where(_image > _whiteLevel)
+    # Transpose
+    white_positionsT = np.transpose(white_positions)
 
     # compute the Manhattan distance matrix between the white pixels
     print("Computing distance matrix")
     white_positions_array = np.column_stack(white_positions)
-    distance_matrix = manhattan_distances(white_positions_array)
+    #distance_matrix = manhattan_distances(white_positions_array)
+    #distance_matrix = euclidean_distances(white_positions_array)
 
     # Perform clustering (DBSCAN or OPTICS)
     print("Clustering")
-    dbscan = _clusteringAlgorithm(**kwargs, metric="precomputed")
-    clustering = dbscan.fit(distance_matrix)
+    # clusteringManager = _clusteringAlgorithm(**kwargs, metric="precomputed")
+    # clustering = clusteringManager.fit(distance_matrix)
+
+    data = white_positionsT
+    # clusteringManager = _clusteringAlgorithm(eps = 10, p = 2, xi = 0.375)
+    clusteringManager = _clusteringAlgorithm(eps = 1, cluster_method="dbscan")
+    clustering = clusteringManager.fit(data)
+
+    # plot reachability plot
+
+    # Generate reachability plot
+    plt.figure()
+    reachability = clustering.reachability_[clustering.ordering_]
+    plt.plot(reachability)
+    plt.title('Reachability plot')
 
     return (clustering.labels_, white_positions)
 
@@ -56,9 +72,11 @@ def ClusteringWorkflow(_image_path: str, _clusteringAlgorithm, **kwargs):
     # Keep only the first channel
     imageC1 = image[:, :, 0]
 
-    # Get the bounds of the subparts of the image
-    #print("Computing image subparts")
-    #bounds = GetImageSubpartBounds(image)
+    # Get the bounds of the subparts of the imag
+    bounds = GetImageSubpartBounds(image, 200, 200)
+    ## Restrict imageC1 to the first bound
+    bound = bounds[0]
+    imageC1 = imageC1[bound[0]:bound[1], bound[2]:bound[3]]
             
     (labels, positions) = ClusterImageWhitePixels(imageC1, _clusteringAlgorithm, **kwargs)
 
@@ -124,6 +142,6 @@ def OPTICSWorkflow(_image_path: str):
 
 if (__name__ == '__main__'):
     image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
-    ClusteringWorkflow(_image_path=image_path, _nbWorkers=4, _clusteringAlgorithm=DBSCAN, eps=30, min_samples=5)
+    ClusteringWorkflow(_image_path=image_path, _clusteringAlgorithm=OPTICS, eps=200, min_samples=5)
     #OPTICSWorkflow(image_path)
     plt.show()
