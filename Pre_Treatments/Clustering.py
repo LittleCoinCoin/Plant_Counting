@@ -77,6 +77,11 @@ def ClusteringWorkflow(_image_path: str, _nbWorkers: int, _clusteringAlgorithm, 
     unique_labels = np.unique(labels)
     print ("Unique labels: ", unique_labels)
 
+    # Get rainbow colors for the clusters
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
+    ## Put the colors in a dictionary
+    color_dict = dict(zip(unique_labels, colors))
+
     print("Displaying")
     #create a new figure
     plt.figure()
@@ -87,10 +92,13 @@ def ClusteringWorkflow(_image_path: str, _nbWorkers: int, _clusteringAlgorithm, 
         label_pos_y = positions[1][labelpos]
 
         # show the clusters as scatter points in the original image
-        plt.scatter(label_pos_x, label_pos_y, label=label, s=0.1)
+        plt.scatter(label_pos_x, label_pos_y, label=label, s=0.1, color=color_dict[label])
+
+        # plot the name of the cluster at the center of the cluster
+        plt.text(np.mean(label_pos_x), np.mean(label_pos_y), str(label), fontsize=5, color='black')
 
 if (__name__ == '__main__'):
     image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
-    ClusteringWorkflow(_image_path=image_path, _nbWorkers=4, _clusteringAlgorithm=DBSCAN, eps=3, min_samples=5)
+    ClusteringWorkflow(_image_path=image_path, _nbWorkers=4, _clusteringAlgorithm=DBSCAN, eps=30, min_samples=5)
     #OPTICSWorkflow(image_path)
     plt.show()
