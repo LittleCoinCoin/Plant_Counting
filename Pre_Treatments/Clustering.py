@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
+from concurrent.futures import ProcessPoolExecutor
 import matplotlib.pyplot as plt
 
 def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
@@ -25,8 +26,6 @@ def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
     return subparts
 
 def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
-    print("===== OPTICS Clustering =====")
-
     # Load the image
     image = cv2.imread(_image_path)
     # Keep only the first channel
@@ -44,7 +43,6 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
     white_positionsT = np.transpose(white_positions)
 
     # Perform clustering (DBSCAN or OPTICS)
-    print("Clustering")
     data = white_positionsT # an alias to facilitate development and testing alternatives, might be removed later
     clusteringManager = OPTICS(**kwargs, cluster_method="dbscan")
     clustering = clusteringManager.fit(data)
@@ -93,11 +91,37 @@ def Plot_ClusteringWorkflow_OPTICS(_data, _clustering):
     
     axReachability.plot([0, len(reachability)], [_clustering.eps, _clustering.eps], color='black')
 
+def ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath, _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2):
+    epsValues = np.arange(epsMin, epsMax+1, epsStep)
+
+    print("OPTICS Clustering, eps = {}".format(epsValues))
+
+    # Let the user define the number of workers
+    num_workers = 4
+    executions = []
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        executions = [executor.submit(ClusteringWorkflow_OPTICS, image_path, eps = _eps) for _eps in epsValues]
+
+    return [execution.result() for execution in executions]
+
 if (__name__ == '__main__'):
     image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
     
+    epsMin = 1
+    epsMax = 100
+    epsStep = 2
     
-    (whitePositions, clustering) = ClusteringWorkflow_OPTICS(_image_path=image_path, eps=1.25)
-    Plot_ClusteringWorkflow_OPTICS(whitePositions, clustering)
-    #OPTICSWorkflow(image_path)
+    clusters = ParallelCompute_Clusters_EpsVariation_OPTICS(image_path, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
+    clusterNumbers = [len(np.unique(c[1].labels_)) for c in clusters]
+    
+    figNbCulsters = plt.figure()
+    axNbClusters = figNbCulsters.add_subplot()
+    axNbClusters.set_title("Evolution of the number of clusters")
+    axNbClusters.set_xlabel("eps")
+    axNbClusters.set_ylabel("# of clusters")
+
+    epsValues = np.arange(epsMin, epsMax+1, epsStep)
+    axNbClusters.scatter(epsValues, clusterNumbers)
+    axNbClusters.plot(epsValues, clusterNumbers)
+    
     plt.show()
