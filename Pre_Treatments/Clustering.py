@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
-from sklearn.metrics.pairwise import manhattan_distances, euclidean_distances
 import matplotlib.pyplot as plt
 
 def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
@@ -35,26 +34,16 @@ def ClusterImageWhitePixels(_image, _clusteringAlgorithm, _whiteLevel = 220, **k
 
     # Get positions of the white pixels,
     white_positions = np.where(_image > _whiteLevel)
-    # Transpose
+    # Transpose to fit the format expected by the clustering algorithm
     white_positionsT = np.transpose(white_positions)
-
-    # compute the Manhattan distance matrix between the white pixels
-    print("Computing distance matrix")
-    white_positions_array = np.column_stack(white_positions)
-    #distance_matrix = manhattan_distances(white_positions_array)
-    #distance_matrix = euclidean_distances(white_positions_array)
 
     # Perform clustering (DBSCAN or OPTICS)
     print("Clustering")
-    # clusteringManager = _clusteringAlgorithm(**kwargs, metric="precomputed")
-    # clustering = clusteringManager.fit(distance_matrix)
-
-    data = white_positionsT
+    data = white_positionsT # an alias to facilitate development and testing alternatives, might be removed later
     # clusteringManager = _clusteringAlgorithm(eps = 10, p = 2, xi = 0.375)
     clusteringManager = _clusteringAlgorithm(eps = 1, cluster_method="dbscan")
     clustering = clusteringManager.fit(data)
 
-    # plot reachability plot
 
     # Generate reachability plot
     plt.figure()
