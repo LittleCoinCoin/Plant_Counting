@@ -46,14 +46,16 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
     # Perform clustering (DBSCAN or OPTICS)
     print("Clustering")
     data = white_positionsT # an alias to facilitate development and testing alternatives, might be removed later
-    # clusteringManager = _clusteringAlgorithm(eps = 10, p = 2, xi = 0.375)
     clusteringManager = OPTICS(**kwargs, cluster_method="dbscan")
     clustering = clusteringManager.fit(data)
 
+    return (white_positionsT, clustering)
+
+def Plot_ClusteringWorkflow_OPTICS(_data, _clustering):
+
     # get the unique labels
-    labels = clustering.labels_ # an alias to facilitate development
-    unique_labels = np.unique(clustering.labels_)
-    print ("Unique labels: ", unique_labels)
+    unique_labels = np.unique(_clustering.labels_)
+    print ("Unique labels:\n", unique_labels)
 
     # Get rainbow colors for the clusters
     colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
@@ -63,13 +65,13 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
     figClusters = plt.figure()
     axClusters = figClusters.add_subplot()
     axClusters.set_title("Clustering")
-    ordered_labels = clustering.labels_[clustering.ordering_]
-    ordered_positions = white_positionsT[clustering.ordering_]
+    ordered_labels = _clustering.labels_[_clustering.ordering_]
+    ordered_data = _data[_clustering.ordering_]
 
     figReachability = plt.figure()
     axReachability = figReachability.add_subplot()
     axReachability.set_title("Reachability plot")
-    reachability = clustering.reachability_[clustering.ordering_]
+    reachability = _clustering.reachability_[_clustering.ordering_]
     # get the positions of the clusters
     for label in unique_labels:
         
@@ -77,8 +79,8 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
         labelpos = np.where(ordered_labels == label)
 
         # Plot the clusters
-        label_pos_x = ordered_positions[labelpos, 0]
-        label_pos_y = ordered_positions[labelpos, 1]
+        label_pos_x = ordered_data[labelpos, 0]
+        label_pos_y = ordered_data[labelpos, 1]
         ## show the clusters as scatter points in the original image
         axClusters.scatter(label_pos_x, label_pos_y, label=label, s=0.1, color=color_dict[label])
         ## plot the name of the cluster at the center of the cluster
@@ -88,9 +90,14 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
         ## Generate reachability plot
         Rk = reachability[labelpos]
         axReachability.scatter(labelpos[0], Rk, color=color_dict[label], alpha = 0.5)
+    
+    axReachability.plot([0, len(reachability)], [_clustering.eps, _clustering.eps], color='black')
 
 if (__name__ == '__main__'):
     image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
-    ClusteringWorkflow_OPTICS(_image_path=image_path, eps=1)
+    
+    
+    (whitePositions, clustering) = ClusteringWorkflow_OPTICS(_image_path=image_path, eps=1.25)
+    Plot_ClusteringWorkflow_OPTICS(whitePositions, clustering)
     #OPTICSWorkflow(image_path)
     plt.show()
