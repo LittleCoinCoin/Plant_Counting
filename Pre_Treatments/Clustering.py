@@ -4,6 +4,11 @@ from sklearn.cluster import DBSCAN, OPTICS
 from concurrent.futures import ProcessPoolExecutor
 import matplotlib.pyplot as plt
 
+import os
+import sys
+sys.path.append(os.path.abspath("./Utility"))
+import general_IO as gIO
+
 def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
     subparts = []
     height, width = image.shape[:2]
@@ -26,6 +31,9 @@ def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
     return subparts
 
 def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
+
+    print("OPTICS Clustering for image: ", _image_path, " with parameters: ", kwargs)
+
     # Load the image
     image = cv2.imread(_image_path)
     # Keep only the first channel
@@ -91,37 +99,78 @@ def Plot_ClusteringWorkflow_OPTICS(_data, _clustering):
     
     axReachability.plot([0, len(reachability)], [_clustering.eps, _clustering.eps], color='black')
 
-def ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath, _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2):
-    epsValues = np.arange(epsMin, epsMax+1, epsStep)
-
-    print("OPTICS Clustering, eps = {}".format(epsValues))
-
-    # Let the user define the number of workers
-    num_workers = 4
+def ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath, _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2):    
+    epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
     executions = []
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        executions = [executor.submit(ClusteringWorkflow_OPTICS, image_path, eps = _eps) for _eps in epsValues]
+
+    # Parallel computation of the OPTICS clustering for each value of eps
+    with ProcessPoolExecutor(max_workers=_nbWorkers) as executor:
+        executions = [executor.submit(ClusteringWorkflow_OPTICS, _imagePath, eps = _eps) for _eps in epsValues]
 
     return [execution.result() for execution in executions]
 
-if (__name__ == '__main__'):
-    image_path = "Tutorial/Output_General/Set1/Output/Session_1/Otsu/OTSU_rgb_83.jpg"
+def Clusters_EpsVariation_OPTICS(_imagePath, _pathOutputNbClusterFile,
+                                 _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2,
+                                 _plotNbClusters = False):
+    """
+    Performs OPTICS clustering on the image in _imagePath for different values of eps.
+    The number of clusters is computed for each value of eps and saved in a file
+    in directory _pathOutputNbClusterFile (the file name is the image name with .csv extension).
+
+    Parameters:
+    _imagePath: str
+        The path to the image to process
+    _pathOutputNbClusterFile: str
+        The path to the directory where to save the number of clusters for each value of eps.
+    _nbWorkers: int
+        The number of workers to use for parallel processing
+    _epsMin: float
+        The minimum value of eps to consider
+    _epsMax: float
+        The maximum value of eps to consider
+    _epsStep: float
+        The step to use to go from _epsMin to _epsMax
+    _plotNbClusters: bool
+        If True, a plot of the number of clusters as a function of eps is displayed.
+
+    Returns:
+        None
+    """
+    print("==== Eps parameter variation for OPTICS clustering for image: ", _imagePath)
+
+    epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
+    clusters = ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath = _imagePath, 
+                _nbWorkers = _nbWorkers, _epsMin = _epsMin, _epsMax = _epsMax, _epsStep = _epsStep)
+    clusterNumbers = [len(np.unique(c[1].labels_)) for c in clusters]
+
+    output = ["{}, {}".format(epsValues[i], clusterNumbers[i]) for i in range(epsValues.shape[0])]
+    gIO.writer(_pathOutputNbClusterFile, image_name.split(".")[0]+".csv", output, True, True)
     
+    if (_plotNbClusters):
+        figNbCulsters = plt.figure()
+        axNbClusters = figNbCulsters.add_subplot()
+        axNbClusters.set_title("Evolution of the number of clusters")
+        axNbClusters.set_xlabel("eps")
+        axNbClusters.set_ylabel("# of clusters")
+
+        axNbClusters.scatter(epsValues, clusterNumbers)
+        axNbClusters.plot(epsValues, clusterNumbers)
+
+if (__name__ == '__main__'):
+    path_data_images = "Tutorial/Output_General/Set1/Output/Session_1/Otsu"
+    # get the file names in path_data_images
+    file_names = os.listdir(path_data_images)
+    
+    path_output = "./out"
+    path_output_clustering_behavior = path_output + "/Cluster_Number_by_EpsVariation"
+    gIO.check_make_directory(path_output_clustering_behavior)
+
     epsMin = 1
     epsMax = 100
     epsStep = 2
-    
-    clusters = ParallelCompute_Clusters_EpsVariation_OPTICS(image_path, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
-    clusterNumbers = [len(np.unique(c[1].labels_)) for c in clusters]
-    
-    figNbCulsters = plt.figure()
-    axNbClusters = figNbCulsters.add_subplot()
-    axNbClusters.set_title("Evolution of the number of clusters")
-    axNbClusters.set_xlabel("eps")
-    axNbClusters.set_ylabel("# of clusters")
-
-    epsValues = np.arange(epsMin, epsMax+1, epsStep)
-    axNbClusters.scatter(epsValues, clusterNumbers)
-    axNbClusters.plot(epsValues, clusterNumbers)
+    for image_name in file_names:
+        image_path = path_data_images + "/" + image_name
+        Clusters_EpsVariation_OPTICS(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior,
+         _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
     
     plt.show()
