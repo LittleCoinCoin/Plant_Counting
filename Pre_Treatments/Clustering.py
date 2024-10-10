@@ -30,6 +30,117 @@ def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
 
     return subparts
 
+def ClusteringWorkflow_DBSCAN(_image_path: str, _whiteLevel = 220, **kwargs):
+    
+    print("DBSCAN Clustering for image: ", _image_path, " with parameters: ", kwargs)
+
+    # Load the image
+    image = cv2.imread(_image_path)
+    # Keep only the first channel
+    imageC1 = image[:, :, 0]
+
+    # Get the bounds of the subparts of the imag
+    bounds = GetImageSubpartBounds(image, 200, 200)
+    ## Restrict imageC1 to the first bound
+    bound = bounds[0]
+    imageC1 = imageC1[bound[0]:bound[1], bound[2]:bound[3]]
+
+    # Get positions of the white pixels,
+    white_positions = np.where(imageC1 > _whiteLevel)
+    # Transpose to fit the format expected by the clustering algorithm
+    white_positionsT = np.transpose(white_positions)
+
+    # Perform clustering (DBSCAN or OPTICS)
+    data = white_positionsT # an alias to facilitate development and testing alternatives, might be removed later
+    clusteringManager = DBSCAN(**kwargs)
+    clustering = clusteringManager.fit(data)
+
+    return (white_positionsT, clustering)
+
+def Plot_ClusteringWorkflow_DBSCAN(_data, _clustering):
+        # get the unique labels
+        unique_labels = np.unique(_clustering.labels_)
+        print ("Unique labels:\n", unique_labels)
+    
+        # Get rainbow colors for the clusters
+        colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
+        ## Put the colors in a dictionary
+        color_dict = dict(zip(unique_labels, colors))
+    
+        figClusters = plt.figure()
+        axClusters = figClusters.add_subplot()
+        axClusters.set_title("Clustering")
+    
+        for label in unique_labels:
+            
+            ## Get the current label indeces
+            labelpos = np.where(_clustering.labels_ == label)
+    
+            # Plot the clusters
+            label_pos_x = _data[labelpos, 0]
+            label_pos_y = _data[labelpos, 1]
+            ## show the clusters as scatter points in the original image
+            axClusters.scatter(label_pos_x, label_pos_y, label=label, s=0.1, color=color_dict[label])
+            ## plot the name of the cluster at the center of the cluster
+            axClusters.text(np.mean(label_pos_x), np.mean(label_pos_y), str(label), fontsize=5, color='black')
+
+def ParallelCompute_Clusters_EpsVariation_DBSCAN(_imagePath, _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2):
+    epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
+    executions = []
+
+    # Parallel computation of the DBSCAN clustering for each value of eps
+    with ProcessPoolExecutor(max_workers=_nbWorkers) as executor:
+        executions = [executor.submit(ClusteringWorkflow_DBSCAN, _imagePath, eps = _eps) for _eps in epsValues]
+
+    return [execution.result() for execution in executions]
+
+def Clusters_EpsVariation_DBSCAN(_imagePath, _pathOutputNbClusterFile,
+                                    _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2,
+                                    _plotNbClusters = False):
+    """
+    Performs DBSCAN clustering on the image in _imagePath for different values of eps.
+    The number of clusters is computed for each value of eps and saved in a file
+    in directory _pathOutputNbClusterFile (the file name is the image name with .csv extension).
+
+    Parameters:
+    _imagePath: str
+        The path to the image to process
+    _pathOutputNbClusterFile: str
+        The path to the directory where to save the number of clusters for each value of eps.
+    _nbWorkers: int
+        The number of workers to use for parallel processing
+    _epsMin: float
+        The minimum value of eps to consider
+    _epsMax: float
+        The maximum value of eps to consider
+    _epsStep: float
+        The step to use to go from _epsMin to _epsMax
+    _plotNbClusters: bool
+        If True, a plot of the number of clusters as a function of eps is displayed.
+
+    Returns:
+        None
+    """
+    print("==== Eps parameter variation for DBSCAN clustering for image: ", _imagePath)
+
+    epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
+    clusters = ParallelCompute_Clusters_EpsVariation_DBSCAN(_imagePath = _imagePath,
+                _nbWorkers = _nbWorkers, _epsMin = _epsMin, _epsMax = _epsMax, _epsStep = _epsStep)
+    clusterNumbers = [len(np.unique(c[1].labels_)) for c in clusters]
+
+    output = ["{}, {}".format(epsValues[i], clusterNumbers[i]) for i in range(epsValues.shape[0])]
+    gIO.writer(_pathOutputNbClusterFile, image_name.split(".")[0]+".csv", output, True, True)
+
+    if (_plotNbClusters):
+        figNbCulsters = plt.figure()
+        axNbClusters = figNbCulsters.add_subplot()
+        axNbClusters.set_title("Evolution of the number of clusters")
+        axNbClusters.set_xlabel("eps")
+        axNbClusters.set_ylabel("# of clusters")
+
+        axNbClusters.scatter(epsValues, clusterNumbers)
+        axNbClusters.plot(epsValues, clusterNumbers)
+
 def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
 
     print("OPTICS Clustering for image: ", _image_path, " with parameters: ", kwargs)
@@ -161,16 +272,42 @@ if (__name__ == '__main__'):
     # get the file names in path_data_images
     file_names = os.listdir(path_data_images)
     
+    ##### Clustering behavior relative to the eps parameter
+    ### Parameters
     path_output = "./out"
     path_output_clustering_behavior = path_output + "/Cluster_Number_by_EpsVariation"
-    gIO.check_make_directory(path_output_clustering_behavior)
-
     epsMin = 1
     epsMax = 100
     epsStep = 2
+
+    ### For OPTICS
+    path_output_clustering_behavior_OPTICS = path_output_clustering_behavior + "/OPTICS"
+    gIO.check_make_directory(path_output_clustering_behavior_OPTICS)
     for image_name in file_names:
         image_path = path_data_images + "/" + image_name
-        Clusters_EpsVariation_OPTICS(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior,
+        Clusters_EpsVariation_OPTICS(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior_OPTICS,
          _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
+
+    ### For DBSCAN
+    # path_output_clustering_behavior_DBSCAN = path_output_clustering_behavior + "/DBSCAN"
+    # gIO.check_make_directory(path_output_clustering_behavior_DBSCAN)
+    # for image_name in file_names:
+    #     image_path = path_data_images + "/" + image_name
+    #     Clusters_EpsVariation_DBSCAN(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior_DBSCAN,
+    #      _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
+
+    ##### Clustering and ploting the results 
+    ### OPTICS
+    # for image_name in file_names:
+    #     print ("Processing image: ", image_name)
+    #     image_path = path_data_images + "/" + image_name
+    #     white_positions, clustering = ClusteringWorkflow_OPTICS(image_path, eps = 21)
+    #     Plot_ClusteringWorkflow_OPTICS(white_positions, clustering)
+
+    ### DBSCAN
+    # for image_name in file_names:
+    #     image_path = path_data_images + "/" + image_name
+    #     white_positions, clustering = ClusteringWorkflow_DBSCAN(image_path, eps = 21)
+    #     Plot_ClusteringWorkflow_DBSCAN(white_positions, clustering)
     
     plt.show()
