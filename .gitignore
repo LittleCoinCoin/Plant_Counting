@@ -1,5 +1,11 @@
 ###### Project ######
 
+# Ignore private image data used for the project
+data/
+
+# Ignore temp output directory used for internal tests 
+out/
+
 # Ignore Tutorial simulation step images
 Simu_Steps_Pictures/
 
