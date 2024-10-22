@@ -382,11 +382,18 @@ if (__name__ == '__main__'):
     # for _file in files[:1]:
     #     Plot_NbClustersFromFile(filePath, _file)
 
-    ### Multiple files: DBSCAN et OPTICS of the same image
+    ### Multiple files: DBSCAN et OPTICS of the same image + SAVE the PLOTS
+    path_out_plots = path_output_clustering_behavior + "/Cluster_Numbers_Comp_Plots"
+    gIO.check_make_directory(path_out_plots)
+    
     filePaths = [path_output_clustering_behavior + "/DBSCAN", path_output_clustering_behavior + "/OPTICS"]
-    fileNames = [file_names[0].split(".")[0]+".csv", file_names[0].split(".")[0]+".csv"]
     labels = ["DBSCAN", "OPTICS"]
-    figNbClusters = Plot_NbClustersFromFiles(filePaths, fileNames, labels)
+    for _file in file_names:
+        fileNameClean = _file.split(".")[0]
+        fileNames = [fileNameClean+".csv", fileNameClean+".csv"]
+        figNbClusters = Plot_NbClustersFromFiles(filePaths, fileNames, labels)
+        figNbClusters.legend()
+        figNbClusters.savefig(path_out_plots + "/" + fileNameClean + ".png")
 
     ##### Clustering and ploting the results 
     ### OPTICS
