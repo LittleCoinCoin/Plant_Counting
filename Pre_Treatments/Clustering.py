@@ -264,11 +264,89 @@ def Clusters_EpsVariation_OPTICS(_imagePath, _pathOutputNbClusterFile,
         axNbClusters.set_xlabel("eps")
         axNbClusters.set_ylabel("# of clusters")
 
-        axNbClusters.scatter(epsValues, clusterNumbers)
-        axNbClusters.plot(epsValues, clusterNumbers)
+        axNbClusters.plot(epsValues, clusterNumbers, marker='o')
+
+def Plot_NbClustersFromFile(_path, _fileName):
+    """
+    Imports a csv file containing the number of clusters as a function of another value.
+    The file is assumed to have two columns separated by a comma. The first column is the
+    value and the second column is the number of clusters.
+
+    Parameters:
+    _path: str
+        The path to the directory containing the file
+    _fileName: str
+        The name of the file to import
+    
+    Returns:
+        The figure.
+    """
+
+    fileContent = gIO.read(_path, _fileName)
+    fileContentSTRSplit = [_line.split(',') for _line in fileContent]
+    xAndNbClusters = np.array([(float(_x), float(_y)) for [_x,_y] in fileContentSTRSplit])
+
+    figNbCulsters = plt.figure()
+    axNbClusters = figNbCulsters.add_subplot()
+    axNbClusters.set_title("Evolution of the number of clusters")
+    axNbClusters.set_xlabel("eps")
+    axNbClusters.set_ylabel("# of clusters")
+
+    axNbClusters.scatter(xAndNbClusters[:,0], xAndNbClusters[:,1])
+    axNbClusters.plot(xAndNbClusters[:,0], xAndNbClusters[:,1])
+
+    return figNbCulsters
+
+def Plot_NbClustersFromFiles(_path : list, _fileNames : list, _labels : list = None):
+    """
+    Imports a csv file containing the number of clusters as a function of another value.
+    The file is assumed to have two columns separated by a comma. The first column is the
+    value and the second column is the number of clusters.
+
+    Parameters:
+    _path: list
+        The list of paths to the directories containing the files
+    _fileNames: list
+        The list of names of the files to import
+    _labels: list, optional
+        The labels to display for each file. Default is None. In that case the file paths are added.
+    
+    Returns:
+        The figure.
+    """
+
+    nbPaths = len(_path)
+    nbFiles = len(_fileNames)
+    assert nbPaths == nbFiles, "The number of paths and the number of files must be the same."
+    
+    if (_labels is None):
+        _labels = [_path[i] + "/" + _fileNames[i] for i in range(nbPaths)]
+    else:
+        assert len(_labels) == nbPaths, "The number of labels must be the same as the number of paths."
+
+    figNbCulsters = plt.figure()
+    axNbClusters = figNbCulsters.add_subplot()
+    axNbClusters.set_title("Evolution of the number of clusters")
+    axNbClusters.set_xlabel("eps")
+    axNbClusters.set_ylabel("# of clusters")
+
+    scatterSymbols = ['o', 'x', '+', 'v', '^', '<', '>', 's', 'd', 'p', 'h', 'H', '*', 'P', 'X']
+    nbSymbols = len(scatterSymbols)
+
+    for i in range(nbPaths):
+        fileContent = gIO.read(_path[i], _fileNames[i])
+        fileContentSTRSplit = [_line.split(',') for _line in fileContent]
+        xAndNbClusters = np.array([(float(_x), float(_y)) for [_x,_y] in fileContentSTRSplit])
+
+        axNbClusters.plot(xAndNbClusters[:,0], xAndNbClusters[:,1], marker=scatterSymbols[i%nbSymbols], alpha=0.5, label=_labels[i])
+    
+    return figNbCulsters
 
 if (__name__ == '__main__'):
-    path_data_images = "Tutorial/Output_General/Set1/Output/Session_1/Otsu"
+    ### Input Parameters
+    image_type = "real/Niort"
+    #path_data_images = "../Tutorial/Output_General/Set1/Output/Session_1/Otsu"
+    path_data_images = "../out/real/Niort/Output/Session_1/Otsu"
     # get the file names in path_data_images
     file_names = os.listdir(path_data_images)
     
@@ -295,6 +373,19 @@ if (__name__ == '__main__'):
     #     image_path = path_data_images + "/" + image_name
     #     Clusters_EpsVariation_DBSCAN(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior_DBSCAN,
     #      _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
+
+    ##### Plot cluster numbers
+    ### Individual files
+    # filePath = path_output_clustering_behavior + "/OPTICS"
+    # files = os.listdir(filePath)
+    # for _file in files[:1]:
+    #     Plot_NbClustersFromFile(filePath, _file)
+
+    ### Multiple files: DBSCAN et OPTICS of the same image
+    filePaths = [path_output_clustering_behavior + "/DBSCAN", path_output_clustering_behavior + "/OPTICS"]
+    fileNames = [file_names[0].split(".")[0]+".csv", file_names[0].split(".")[0]+".csv"]
+    labels = ["DBSCAN", "OPTICS"]
+    figNbClusters = Plot_NbClustersFromFiles(filePaths, fileNames, labels)
 
     ##### Clustering and ploting the results 
     ### OPTICS
