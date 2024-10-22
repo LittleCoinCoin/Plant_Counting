@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 import os
 import sys
-sys.path.append(os.path.abspath("./Utility"))
+sys.path.append(os.path.abspath("../Utility"))
 import general_IO as gIO
 
 def GetImageSubpartBounds(image, _maxHeight = 100, _maxWidth = 100):
@@ -351,9 +351,10 @@ if (__name__ == '__main__'):
     file_names = os.listdir(path_data_images)
     
     ##### Clustering behavior relative to the eps parameter
-    ### Parameters
-    path_output = "./out"
+    ### Output Parameters
+    path_output = "../out/" + image_type
     path_output_clustering_behavior = path_output + "/Cluster_Number_by_EpsVariation"
+    ### Tests Parameters
     epsMin = 1
     epsMax = 100
     epsStep = 2
