@@ -77,6 +77,8 @@ def Plot_ClusteringWorkflow_DBSCAN(_data, _clustering):
             axClusters.scatter(label_pos_x, label_pos_y, label=label, s=0.1, color=color_dict[label])
             ## plot the name of the cluster at the center of the cluster
             axClusters.text(np.mean(label_pos_x), np.mean(label_pos_y), str(label), fontsize=5, color='black')
+        
+        return figClusters
 
 def ParallelCompute_Clusters_EpsVariation_DBSCAN(_imagePath, _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2):
     epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
@@ -199,6 +201,8 @@ def Plot_ClusteringWorkflow_OPTICS(_data, _clustering):
         axReachability.scatter(labelpos[0], Rk, color=color_dict[label], alpha = 0.5)
     
     axReachability.plot([0, len(reachability)], [_clustering.eps, _clustering.eps], color='black')
+
+    return figClusters, figReachability
 
 def ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath, _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2):    
     epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
