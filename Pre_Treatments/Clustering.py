@@ -39,12 +39,6 @@ def ClusteringWorkflow_DBSCAN(_image_path: str, _whiteLevel = 220, **kwargs):
     # Keep only the first channel
     imageC1 = image[:, :, 0]
 
-    # Get the bounds of the subparts of the imag
-    bounds = GetImageSubpartBounds(image, 200, 200)
-    ## Restrict imageC1 to the first bound
-    bound = bounds[0]
-    imageC1 = imageC1[bound[0]:bound[1], bound[2]:bound[3]]
-
     # Get positions of the white pixels,
     white_positions = np.where(imageC1 > _whiteLevel)
     # Transpose to fit the format expected by the clustering algorithm
@@ -150,13 +144,7 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
     # Keep only the first channel
     imageC1 = image[:, :, 0]
 
-    # Get the bounds of the subparts of the imag
-    bounds = GetImageSubpartBounds(image, 200, 200)
-    ## Restrict imageC1 to the first bound
-    bound = bounds[0]
-    imageC1 = imageC1[bound[0]:bound[1], bound[2]:bound[3]]
-
-     # Get positions of the white pixels,
+    # Get positions of the white pixels,
     white_positions = np.where(imageC1 > _whiteLevel)
     # Transpose to fit the format expected by the clustering algorithm
     white_positionsT = np.transpose(white_positions)
