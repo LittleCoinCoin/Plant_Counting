@@ -88,7 +88,7 @@ def ParallelCompute_Clusters_EpsVariation_DBSCAN(_imagePath, _nbWorkers = 4, _ep
 
     return [execution.result() for execution in executions]
 
-def Clusters_EpsVariation_DBSCAN(_imagePath, _pathOutputNbClusterFile,
+def Clusters_EpsVariation_DBSCAN(_imagePath, _imageName, _pathOutputNbClusterFile,
                                     _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2,
                                     _plotNbClusters = False):
     """
@@ -98,7 +98,9 @@ def Clusters_EpsVariation_DBSCAN(_imagePath, _pathOutputNbClusterFile,
 
     Parameters:
     _imagePath: str
-        The path to the image to process
+        The directory where the image is located.
+    _imageName: str
+        The name of the image with the extension.
     _pathOutputNbClusterFile: str
         The path to the directory where to save the number of clusters for each value of eps.
     _nbWorkers: int
@@ -115,15 +117,15 @@ def Clusters_EpsVariation_DBSCAN(_imagePath, _pathOutputNbClusterFile,
     Returns:
         None
     """
-    print("==== Eps parameter variation for DBSCAN clustering for image: ", _imagePath)
+    print("==== Eps parameter variation for DBSCAN clustering for image: ", _imagePath + "/" + _imageName)
 
     epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
-    clusters = ParallelCompute_Clusters_EpsVariation_DBSCAN(_imagePath = _imagePath,
+    clusters = ParallelCompute_Clusters_EpsVariation_DBSCAN(_imagePath = _imagePath + "/" + _imageName,
                 _nbWorkers = _nbWorkers, _epsMin = _epsMin, _epsMax = _epsMax, _epsStep = _epsStep)
     clusterNumbers = [len(np.unique(c[1].labels_)) for c in clusters]
 
     output = ["{}, {}".format(epsValues[i], clusterNumbers[i]) for i in range(epsValues.shape[0])]
-    gIO.writer(_pathOutputNbClusterFile, image_name.split(".")[0]+".csv", output, True, True)
+    gIO.writer(_pathOutputNbClusterFile, _imageName.split(".")[0]+".csv", output, True, True)
 
     if (_plotNbClusters):
         figNbCulsters = plt.figure()
@@ -208,7 +210,7 @@ def ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath, _nbWorkers = 4, _ep
 
     return [execution.result() for execution in executions]
 
-def Clusters_EpsVariation_OPTICS(_imagePath, _pathOutputNbClusterFile,
+def Clusters_EpsVariation_OPTICS(_imagePath, _imageName, _pathOutputNbClusterFile,
                                  _nbWorkers = 4, _epsMin = 1, _epsMax = 100, _epsStep = 2,
                                  _plotNbClusters = False):
     """
@@ -218,7 +220,9 @@ def Clusters_EpsVariation_OPTICS(_imagePath, _pathOutputNbClusterFile,
 
     Parameters:
     _imagePath: str
-        The path to the image to process
+        The directory where the image is located.
+    _imageName: str
+        The name of the image with the extension.
     _pathOutputNbClusterFile: str
         The path to the directory where to save the number of clusters for each value of eps.
     _nbWorkers: int
@@ -235,15 +239,15 @@ def Clusters_EpsVariation_OPTICS(_imagePath, _pathOutputNbClusterFile,
     Returns:
         None
     """
-    print("==== Eps parameter variation for OPTICS clustering for image: ", _imagePath)
+    print("==== Eps parameter variation for OPTICS clustering for image: ", _imagePath + "/" + _imageName)
 
     epsValues = np.arange(_epsMin, _epsMax+1, _epsStep)
-    clusters = ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath = _imagePath, 
+    clusters = ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath = _imagePath + "/" + _imageName, 
                 _nbWorkers = _nbWorkers, _epsMin = _epsMin, _epsMax = _epsMax, _epsStep = _epsStep)
     clusterNumbers = [len(np.unique(c[1].labels_)) for c in clusters]
 
     output = ["{}, {}".format(epsValues[i], clusterNumbers[i]) for i in range(epsValues.shape[0])]
-    gIO.writer(_pathOutputNbClusterFile, image_name.split(".")[0]+".csv", output, True, True)
+    gIO.writer(_pathOutputNbClusterFile, _imageName.split(".")[0]+".csv", output, True, True)
     
     if (_plotNbClusters):
         figNbCulsters = plt.figure()
@@ -332,9 +336,10 @@ def Plot_NbClustersFromFiles(_path : list, _fileNames : list, _labels : list = N
 
 if (__name__ == '__main__'):
     ### Input Parameters
-    image_type = "real/Niort"
-    #path_data_images = "../Tutorial/Output_General/Set1/Output/Session_1/Otsu"
-    path_data_images = "../out/real/Niort/Output/Session_1/Otsu"
+    #image_type = "real/Bordeaux"
+    #path_data_images = "../out/real/Bordeaux/Output/Session_1/Otsu"
+    image_type = "virtual/Set2"
+    path_data_images = "../Tutorial/Output_General/Set2/Output/Session_1/Otsu"
     # get the file names in path_data_images
     file_names = os.listdir(path_data_images)
     
@@ -348,20 +353,20 @@ if (__name__ == '__main__'):
     epsStep = 2
 
     ### For OPTICS
-    path_output_clustering_behavior_OPTICS = path_output_clustering_behavior + "/OPTICS"
-    gIO.check_make_directory(path_output_clustering_behavior_OPTICS)
-    for image_name in file_names:
-        image_path = path_data_images + "/" + image_name
-        Clusters_EpsVariation_OPTICS(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior_OPTICS,
-         _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
+    # path_output_clustering_behavior_OPTICS = path_output_clustering_behavior + "/OPTICS"
+    # gIO.check_make_directory(path_output_clustering_behavior_OPTICS)
+    # for image_name in file_names:
+    #     Clusters_EpsVariation_OPTICS(_imagePath = path_data_images, _imageName = image_name,
+    #                                  _pathOutputNbClusterFile = path_output_clustering_behavior_OPTICS,
+    #                                 _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
 
     ### For DBSCAN
     # path_output_clustering_behavior_DBSCAN = path_output_clustering_behavior + "/DBSCAN"
     # gIO.check_make_directory(path_output_clustering_behavior_DBSCAN)
     # for image_name in file_names:
-    #     image_path = path_data_images + "/" + image_name
-    #     Clusters_EpsVariation_DBSCAN(_imagePath = image_path, _pathOutputNbClusterFile = path_output_clustering_behavior_DBSCAN,
-    #      _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
+    #     Clusters_EpsVariation_DBSCAN(_imagePath = path_data_images, _imageName = image_name,
+    #                                  _pathOutputNbClusterFile = path_output_clustering_behavior_DBSCAN,
+    #                                 _nbWorkers = 4, _epsMin = epsMin, _epsMax = epsMax, _epsStep = epsStep)
 
     ##### Plot cluster numbers
     ### Individual files
