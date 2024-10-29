@@ -153,7 +153,7 @@ def ClusteringWorkflow_OPTICS(_image_path: str, _whiteLevel = 220, **kwargs):
 
     # Perform clustering (DBSCAN or OPTICS)
     data = white_positionsT # an alias to facilitate development and testing alternatives, might be removed later
-    clusteringManager = OPTICS(**kwargs, cluster_method="dbscan")
+    clusteringManager = OPTICS(**kwargs)
     clustering = clusteringManager.fit(data)
 
     return (white_positionsT, clustering)
@@ -206,7 +206,7 @@ def ParallelCompute_Clusters_EpsVariation_OPTICS(_imagePath, _nbWorkers = 4, _ep
 
     # Parallel computation of the OPTICS clustering for each value of eps
     with ProcessPoolExecutor(max_workers=_nbWorkers) as executor:
-        executions = [executor.submit(ClusteringWorkflow_OPTICS, _imagePath, eps = _eps) for _eps in epsValues]
+        executions = [executor.submit(ClusteringWorkflow_OPTICS, _imagePath, eps = _eps, cluster_method="dbscan") for _eps in epsValues]
 
     return [execution.result() for execution in executions]
 
