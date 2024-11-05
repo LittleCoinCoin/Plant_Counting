@@ -340,10 +340,10 @@ def Plot_NbClustersFromFiles(_path : list, _fileNames : list, _labels : list = N
 
 if (__name__ == '__main__'):
     ### Input Parameters
-    #image_type = "real/Bordeaux"
-    #path_data_images = "../out/real/Bordeaux/Output/Session_1/Otsu"
-    image_type = "virtual/Set2"
-    path_data_images = "../Tutorial/Output_General/Set2/Output/Session_1/Otsu"
+    # image_type = "real/Niort"
+    # path_data_images = "../out/real/Niort/Output/Session_1/Otsu"
+    image_type = "virtual/Set1"
+    path_data_images = "../Tutorial/Output_General/Set1/Output/Session_1/Otsu"
     # get the file names in path_data_images
     file_names = os.listdir(path_data_images)
     
@@ -379,31 +379,48 @@ if (__name__ == '__main__'):
     # for _file in files[:1]:
     #     Plot_NbClustersFromFile(filePath, _file)
 
+    ### All files in a directory
+    filePath = path_output_clustering_behavior + "/DBSCAN"
+    files = os.listdir(filePath)
+    filePaths = [filePath for i in range(len(files))]
+    Plot_NbClustersFromFiles(filePaths, files, _labels = files)
+    plt.legend()
+
     ### Multiple files: DBSCAN et OPTICS of the same image + SAVE the PLOTS
-    path_out_plots = path_output_clustering_behavior + "/Cluster_Numbers_Comp_Plots"
-    gIO.check_make_directory(path_out_plots)
+    # path_out_plots = path_output_clustering_behavior + "/Cluster_Numbers_Comp_Plots"
+    # gIO.check_make_directory(path_out_plots)
     
-    filePaths = [path_output_clustering_behavior + "/DBSCAN", path_output_clustering_behavior + "/OPTICS"]
-    labels = ["DBSCAN", "OPTICS"]
-    for _file in file_names:
-        fileNameClean = _file.split(".")[0]
-        fileNames = [fileNameClean+".csv", fileNameClean+".csv"]
-        figNbClusters = Plot_NbClustersFromFiles(filePaths, fileNames, labels)
-        figNbClusters.legend()
-        figNbClusters.savefig(path_out_plots + "/" + fileNameClean + ".png")
+    # filePaths = [path_output_clustering_behavior + "/DBSCAN", path_output_clustering_behavior + "/OPTICS"]
+    # labels = ["DBSCAN", "OPTICS"]
+    # for _file in file_names:
+    #     fileNameClean = _file.split(".")[0]
+    #     fileNames = [fileNameClean+".csv", fileNameClean+".csv"]
+    #     figNbClusters = Plot_NbClustersFromFiles(filePaths, fileNames, labels)
+    #     figNbClusters.legend()
+    #     figNbClusters.savefig(path_out_plots + "/" + fileNameClean + ".png")
 
     ##### Clustering and ploting the results 
     ### OPTICS
     # for image_name in file_names:
     #     print ("Processing image: ", image_name)
     #     image_path = path_data_images + "/" + image_name
-    #     white_positions, clustering = ClusteringWorkflow_OPTICS(image_path, eps = 21)
+    #     white_positions, clustering = ClusteringWorkflow_OPTICS(image_path, eps = 10)
     #     Plot_ClusteringWorkflow_OPTICS(white_positions, clustering)
 
     ### DBSCAN
     # for image_name in file_names:
     #     image_path = path_data_images + "/" + image_name
-    #     white_positions, clustering = ClusteringWorkflow_DBSCAN(image_path, eps = 21)
+    #     white_positions, clustering = ClusteringWorkflow_DBSCAN(image_path, eps = 10)
     #     Plot_ClusteringWorkflow_DBSCAN(white_positions, clustering)
     
+    ##### Clustering and ploting the results for OPTICS when using parameter "xi" instead of "eps"
+    # image_name = file_names[0]
+    # image_path = path_data_images + "/" + image_name
+    # print ("Processing image: ", image_path)
+    # white_positions, clustering = ClusteringWorkflow_OPTICS(image_path, _whiteLevel = 1, xi = 0.05)
+    # Plot_ClusteringWorkflow_OPTICS(white_positions, clustering)
+
+    # white_positions, clustering = ClusteringWorkflow_DBSCAN(image_path, _whiteLevel = 1, eps = 10)
+    # Plot_ClusteringWorkflow_DBSCAN(white_positions, clustering)
+
     plt.show()
