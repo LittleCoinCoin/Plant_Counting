@@ -1713,7 +1713,7 @@ class MetaSimulation(object):
                                         self.data_adjusted_position_files)
                 MAS_Simulation.Initialize_AD()
                 
-                MAS_Simulation.Perform_Simulation(self.simulation_step,
+                MAS_Simulation.Perform_Search_Simulation(self.simulation_step,
                                                   self.coerced_X,
                                                   self.coerced_Y,
                                                   self.analyse_and_remove_Rows,
